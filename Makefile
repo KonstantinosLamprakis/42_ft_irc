@@ -24,8 +24,6 @@ MAIN = main.cpp
 OBJS := $(addprefix $(OBJECTSDIR)/, $(SRC_FILES:.cpp=.o))
 MAIN_OBJ = $(addprefix $(OBJECTSDIR)/, $(MAIN:.cpp=.o))
 
-ERRIGNORE = 2>/dev/null
-
 all: $(NAME)
 
 $(NAME): $(OBJS) $(MAIN_OBJ) $(HEADERS_FILES)
@@ -44,6 +42,6 @@ clean:
 
 fclean: clean
 	@echo "deleting: " $(NAME)
-	@rm -rf $(NAME) $(ERRIGNORE)
+	@rm -rf $(NAME)
 
 re: fclean all

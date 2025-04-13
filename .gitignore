@@ -1,2 +1,3 @@
-objects
+/objects/
 ircserv
+.vscode

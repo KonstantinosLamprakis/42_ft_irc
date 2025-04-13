@@ -4,6 +4,8 @@
 #include <string>
 #include <iostream>
 
+# include "Request.hpp"
+
 class Server{
 	private:
 		int	_port;
@@ -12,7 +14,8 @@ class Server{
 		Server();
 		Server(int port, std::string password);
 		void start();
-
+		Request parse(std::string input);
+		void execute(Request request);
 };
 
 #endif
