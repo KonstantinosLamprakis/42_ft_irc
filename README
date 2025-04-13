@@ -1,0 +1,13 @@
+https://github.com/mharriso/school21-checklists/blob/master/ng_5_ft_irc.pdf
+
+KICK
+INVITE
+TOPIC
+MODE
+NICK
+USER
+JOIN
+NOTICE - PRIVMSG
+CONNECT
+PASS
+Structure of Commands defined in https://www.rfc-editor.org/rfc/rfc1459.html
