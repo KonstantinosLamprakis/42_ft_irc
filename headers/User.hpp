@@ -1,3 +1,6 @@
+#ifndef USER_HPP
+# define USER_HPP
+
 #include <string>
 
 class User{
@@ -10,4 +13,6 @@ class User{
 
 	public:
 	
-}
+};
+
+#endif
