@@ -1,4 +1,6 @@
 #include <string>
+#include <vector>
+
 
 class request{
 	private:
