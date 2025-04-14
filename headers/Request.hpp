@@ -7,10 +7,10 @@
 
 class Request{
 	private:
-		std::string					_cmnd;
+		std::string					_cmd;
 		std::vector<std::string>	_args;
 	public:
-
+	
 };
 
 #endif
