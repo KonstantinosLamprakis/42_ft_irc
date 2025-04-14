@@ -1,0 +1,68 @@
+RFC 2811
+
+Channels: 
+- Channel names starting with '&', '#', '+' or '!' And up to 50 characters and are case insensitive; SHALL NOT contain any spaces
+   (' '),a control G (^G)(‘,’)(‘:’)
+- Privileged channel members: operators or creators; are allowed to         INVITE  - Invite a client to an invite-only channel (mode +i)
+        KICK    - Eject a client from the channel
+        MODE    - Change the channel's mode, as well as
+                  members' privileges
+        PRIVMSG - Sending messages to the channel (mode +n, +m, +v)
+        TOPIC   - Change the channel topic in a mode +t channel
+- Channel operators are marked with @ symbol next to nickname for replies to commands like NAMES WHO WHOIS
+- Channel with prefix “+” does not support channel modes - no operators are allowed 
+- Channel with “!” Prefix: user who creates it becomes channel creator; also channel operator status. Channel creator vs Channel operator can be seen with MODE command;
+- Channels with +, #, & have a limited lifetime; they are deleted after every user left the channel
+- Channel names should d not be allowed if a channel operator left channel recently to avoid network split (usually only matters for more than one server”
+- Safe channels: have to be created on request by a special JOIN command ; User only choses one part of the channel name and server automatically appends 5 chars making it unique; User who creates the safe channel becomes channel creator immediately; only short name given by user is relevant for naming in the chat itself - appendix is to avoid abuse:    The channel identifier is a function of the time.  The current time
+   (as defined under UNIX by the number of seconds elapsed since
+   00:00:00 GMT, January 1, 1970) is converted in a string of five (5)
+   characters using the following base: ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890" (each character has a decimal value starting from 0 for 'A' to 35 for '0').
+- 
+- The various modes available for channels are as follows:
+
+        O - give "channel creator" status;
+        o - give/take channel operator privilege;
+        v - give/take the voice privilege;
+
+        a - toggle the anonymous channel flag;
+        i - toggle the invite-only channel flag;
+        m - toggle the moderated channel;
+        n - toggle the no messages to channel from clients on the
+            outside;
+        q - toggle the quiet channel flag;
+        p - toggle the private channel flag;
+        s - toggle the secret channel flag;
+        r - toggle the server reop channel flag;
+        t - toggle the topic settable by channel operator only flag;
+
+        k - set/remove the channel key (password);
+        l - set/remove the user limit to channel;
+
+        b - set/remove ban mask to keep users out;
+        e - set/remove an exception mask to override a ban mask;
+        I - set/remove an invitation mask to automatically override
+            the invite-only flag;
+- MODE is used to set the flags listed above; O mode can only be even by servers after channel creation, not changed by e.g. operators
+- User name anonymous is forbidden
+- Anonymous channels: Replies to the WHOIS, WHO and NAMES commands MUST NOT reveal the presence of other users on channels for which the anonymous flag is set; Servers MUST also
+   NOT send QUIT messages for users leaving such channels to the other
+   channel members but generate a PART message instead. '&' as prefix
+(Channel operator can set unset a; (!:can only be SET not UNSET by channel creator)
+If p or s fags are used: channels cannot be seen by WHOIS command for example; they are hidden; if s (secret) is set: TOPIC, LIST, NAMES commands
+Will not display iT BUT MODE will
+- Either p or s, not both is possible
+- Channel flag r only if ! Channel; only creator can set it
+- Channel ban: user request is denied ; only if invited by an operator - this is okay
+- servers MUST forbid the creation of a
+   new channel which has the same shortname of a channel currently
+   existing
+- When a channel has been opless for longer than the "reop delay"
+   period and has the channel flag 'r' set, IRC servers are responsible for giving the channel operator status randomly to some of the members. Mechanism of distribution is described in he RFC 2811 5.2.5 chapter
+
+
+
+
+
+RFC 2812
+
