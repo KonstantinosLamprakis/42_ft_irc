@@ -10,7 +10,10 @@ class Channel{
 		std::vector<std::string> _users;
 
 	public:
-
+	Channel();
+	Channel(Channel &copy);
+	Channel& operator=(Channel &old);
+	~Channel();
 };
 
 #endif
