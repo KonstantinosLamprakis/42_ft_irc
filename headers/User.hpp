@@ -12,7 +12,10 @@ class User{
 		int	_fd;
 
 	public:
-	
+	User();
+	User(User &copy);
+	User& operator=(User &old);
+	~User();
 };
 
 #endif

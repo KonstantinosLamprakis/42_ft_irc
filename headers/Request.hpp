@@ -11,6 +11,10 @@ class Request{
 		std::vector<std::string>	_args;
 	public:
 	
+	Request();
+	Request(Request &copy);
+	Request& operator=(Request &old);
+	~Request();
 };
 
 #endif
