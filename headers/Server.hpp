@@ -1,6 +1,7 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# define BACKLOG 10
 # include <string>
 # include <iostream>
 # include <sys/socket.h>
@@ -28,6 +29,7 @@ class Server
 		void	start();
 		Request	parse(std::string input);
 		void	execute(Request request);
+		void	listentosocket();
 };
 
 #endif
