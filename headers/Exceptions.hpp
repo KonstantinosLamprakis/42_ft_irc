@@ -8,4 +8,10 @@ class	ServerConnectionFailed : public std::exception
 		const char* what() const throw();
 };
 
+class	ClientConnectionFailed : public std::exception
+{
+	public:
+		const char* what() const throw();
+};
+
 #endif

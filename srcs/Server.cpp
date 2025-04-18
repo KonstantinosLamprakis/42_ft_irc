@@ -1,9 +1,15 @@
 #include "../headers/Server.hpp"
 #include "../headers/Exceptions.hpp"
 
-Server::Server() {}
+Server::Server()
+{
+	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+}
 
-Server::Server() : _port(0), _password("") {}
+Server::Server() : _port(0), _password("") 
+{
+	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+}
 
 Server::Server(Server &copy){
 	// if server is ready -> fill the copy constructor
@@ -23,19 +29,22 @@ Server::Server(int port, std::string password){
 /**
  * @brief starts server and initializes ports
  * 
- * @param _sockfd fd of the connection bind to port
+ * @param comm_socket input for accept; saves the communication socket for the connection requested
+ * @param tmp temporary storage of the fd for the new connection
  * @return "running connection"
  */
 
 void	Server::listentosocket()
 {
+	sockaddr	comm_socket;
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
 		throw ServerConnectionFailed() ;
 	}
+	
 
-}
+}	
 
 /**
  * @brief starts server and initializes ports
@@ -71,6 +80,7 @@ void	Server::start(){
 	{
 		if (test = socket(this->_server_info->ai_family, this->_server_info->ai_socktype, this->_server_info->ai_protocol) == -1)
 		{
+			freeaddrinfo(this->_server_info);
 			throw ServerConnectionFailed();
 			continue ;
 		}
@@ -79,12 +89,14 @@ void	Server::start(){
 			setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)); // option to allow reusage of the same port without waiting incl keeping up connections
 			if (test_2 = bind(test, this->_server_info->ai_addr, this->_server_info->ai_addrlen) != 0)
 			{
+				freeaddrinfo(this->_server_info);
 				throw ServerConnectionFailed();
 				continue ;
 			}
 			this->_sockfd = test;
 			break ;
 		}
+		freeaddrinfo(this->_server_info);
 		throw ServerConnectionFailed();
 	}
 	try
@@ -93,10 +105,11 @@ void	Server::start(){
 	}
 	catch(const std::exception &e)
 	{
+		freeaddrinfo(this->_server_info);
 		throw e ;
 	}
 	std::cout << "starting at port: " << this->_port << std::endl;
-	//freeaddrinfo(server_info);
+	freeaddrinfo(this->_server_info);
 }
 
 Request Server::parse(std::string input){

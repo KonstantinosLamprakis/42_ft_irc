@@ -2,6 +2,7 @@
 # define SERVER_HPP
 
 # define BACKLOG 10
+# define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
 # include <string>
 # include <iostream>
 # include <sys/socket.h>
@@ -18,6 +19,7 @@ class Server
 		std::string 		_password;
 		int					_sockfd;
 		struct	addrinfo*	_server_info;
+		int					_connection_fds[MAX_CONNECTIONS];
 		
 	public:
 		Server();
