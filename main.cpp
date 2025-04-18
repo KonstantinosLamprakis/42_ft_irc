@@ -31,7 +31,7 @@ void validateInput(int ac, char **argv){
 		if (portStr[i] < '0' || portStr[i] > '9') throw std::runtime_error("Error: port should only contain digits") ;
     }
 
-	if (portStr.size() > 5 || std::stoi(portStr) > 65535){
-		throw std::runtime_error("Error: port should only be between 1 and 65535");
+	if (portStr.size() > 5 || std::stoi(portStr) > 65535 || std::stoi(portStr) < 1025){
+		throw std::runtime_error("Error: port should only be between 1024 and 65535");
 	}
 }
