@@ -12,6 +12,7 @@
 # include <unistd.h>
 
 # include "Request.hpp"
+# include "User.cpp"
 
 class Server
 {
@@ -33,6 +34,7 @@ class Server
 		Request	parse(std::string input);
 		void	execute(Request request);
 		void	listentosocket();
+		void	run_connection(int fd);
 };
 
 #endif

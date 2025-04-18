@@ -26,18 +26,25 @@ Server::Server(int port, std::string password){
 	this->_password = password;
 }
 
+void	run_connection(int fd)
+{
+	User User(fd);
+}
+
 /**
- * @brief starts server and initializes ports
+ * @brief listens to the open socket of the server for incoming clients
  * 
  * @param tmp temporary storage of the fd for the new connection
  * @param comm_socket input for accept; saves the communication socket for the connection requested
+ * @param i iterator
  * @return "running connection"
  */
 
-void	Server::listentosocket() //not directly throw error - server should stay running
+void	Server::listentosocket() //not directly throw error - server should keep running
 {
 	int			tmp;
 	sockaddr	comm_socket;
+	int			i = 0;
 
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
@@ -48,6 +55,16 @@ void	Server::listentosocket() //not directly throw error - server should stay ru
 	{
 		std::cout << "Accept failed" << std::endl;
 		// throw ClientConnectionFailed() ;
+	}
+	else
+	{
+		while (i < MAX_CONNECTIONS && this->_connection_fds[i] != NULL)
+			i++;
+		if (i < MAX_CONNECTIONS)
+			this->_connection_fds[i] = tmp;
+		else
+			std::cout << "The maximum amount of connections is reached" << std::endl;
+		this->run_connection(tmp);
 	}
 }
 
@@ -120,7 +137,6 @@ void	Server::start(){
 	i = 0;
 	while (i < 1024 && this->_connection_fds[i] != NULL)
 		close (this->_connection_fds[i++]);
-	std::cout << "starting at port: " << this->_port << std::endl;
 	freeaddrinfo(this->_server_info);
 }
 

@@ -13,6 +13,7 @@ class User{
 
 	public:
 	User();
+	User(int fd);
 	User(User &copy);
 	User& operator=(User &old);
 	~User();
