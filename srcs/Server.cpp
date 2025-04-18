@@ -46,7 +46,7 @@ void	Server::listentosocket()
  * @param tmp struct to check all generated versions in linked list which one is working
  * @param test all solutions in the linked list get tested - if one of them works we continue to try bind
  * @param test_2 the existing sockets get tested - if one of them works we continue with it 
- * 
+ * @param yes value to set flag in setsockopt function (refered to as address)
  * @return "running connection"
  */
 
@@ -55,6 +55,7 @@ void	Server::start(){
 	struct	addrinfo*	tmp;
 	int					test;
 	int					test_2;
+	int					yes = 1;
 
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
@@ -75,6 +76,7 @@ void	Server::start(){
 		}
 		else
 		{
+			setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)); // option to allow reusage of the same port without waiting incl keeping up connections
 			if (test_2 = bind(test, this->_server_info->ai_addr, this->_server_info->ai_addrlen) != 0)
 			{
 				throw ServerConnectionFailed();
