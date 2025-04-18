@@ -12,7 +12,7 @@
 # include <unistd.h>
 
 # include "Request.hpp"
-# include "User.cpp"
+# include "User.hpp"
 
 class Server
 {

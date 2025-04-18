@@ -29,6 +29,8 @@ Server::Server(int port, std::string password){
 void	run_connection(int fd)
 {
 	User User(fd);
+
+	//here the class needs to be filled with the input data from the "login connection to the server"
 }
 
 /**
@@ -88,7 +90,7 @@ void	Server::start(){
 	int					test;
 	int					test_2;
 	int					yes = 1;
-	int					i;
+	int					i = 0;
 
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
@@ -134,7 +136,6 @@ void	Server::start(){
 		throw e ;
 	}
 	close(this->_sockfd);
-	i = 0;
 	while (i < 1024 && this->_connection_fds[i] != NULL)
 		close (this->_connection_fds[i++]);
 	freeaddrinfo(this->_server_info);

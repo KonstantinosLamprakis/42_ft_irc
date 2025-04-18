@@ -1,4 +1,4 @@
-#include "headers/Server.hpp"
+#include "./headers/Server.hpp"
 
 void validateInput(int ac, char **argv);
 
