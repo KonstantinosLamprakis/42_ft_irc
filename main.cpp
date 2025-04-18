@@ -5,8 +5,8 @@ void validateInput(int ac, char **argv);
 int main (int ac, char **argv){
 	try{
 		validateInput(ac, argv);
-		Server	server(std::stoi(argv[1]), argv[2]);
-		server.start();
+		Server	irc_server(std::stoi(argv[1]), argv[2]);
+		irc_server.start();
 	}
 	catch(const std::exception& e){
 		std::cerr << e.what() << std::endl;
