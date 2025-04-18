@@ -26,6 +26,13 @@ Server::Server(int port, std::string password){
 	this->_password = password;
 }
 
+/**
+ * @brief initializes User and handles recv and send for the individual connection?! - need to think about that again
+ * 
+ * @param User each client gets own user incl. fd and data
+ * @return "running 1 on 1 connection"
+ */
+
 void	run_connection(int fd)
 {
 	User User(fd);
