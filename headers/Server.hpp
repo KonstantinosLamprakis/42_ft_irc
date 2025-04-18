@@ -9,6 +9,7 @@
 # include <sys/types.h>
 # include <netdb.h>
 # include <exception>
+# include <unistd.h>
 
 # include "Request.hpp"
 

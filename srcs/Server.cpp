@@ -29,22 +29,27 @@ Server::Server(int port, std::string password){
 /**
  * @brief starts server and initializes ports
  * 
- * @param comm_socket input for accept; saves the communication socket for the connection requested
  * @param tmp temporary storage of the fd for the new connection
+ * @param comm_socket input for accept; saves the communication socket for the connection requested
  * @return "running connection"
  */
 
-void	Server::listentosocket()
+void	Server::listentosocket() //not directly throw error - server should stay running
 {
+	int			tmp;
 	sockaddr	comm_socket;
+
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
-		throw ServerConnectionFailed() ;
+		// throw ClientConnectionFailed() ;
 	}
-	
-
-}	
+	if (tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket)) == -1)
+	{
+		std::cout << "Accept failed" << std::endl;
+		// throw ClientConnectionFailed() ;
+	}
+}
 
 /**
  * @brief starts server and initializes ports
@@ -56,6 +61,7 @@ void	Server::listentosocket()
  * @param test all solutions in the linked list get tested - if one of them works we continue to try bind
  * @param test_2 the existing sockets get tested - if one of them works we continue with it 
  * @param yes value to set flag in setsockopt function (refered to as address)
+ * @param i iterator
  * @return "running connection"
  */
 
@@ -65,6 +71,7 @@ void	Server::start(){
 	int					test;
 	int					test_2;
 	int					yes = 1;
+	int					i;
 
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
@@ -81,7 +88,7 @@ void	Server::start(){
 		if (test = socket(this->_server_info->ai_family, this->_server_info->ai_socktype, this->_server_info->ai_protocol) == -1)
 		{
 			freeaddrinfo(this->_server_info);
-			throw ServerConnectionFailed();
+			// throw ServerConnectionFailed();
 			continue ;
 		}
 		else
@@ -90,12 +97,13 @@ void	Server::start(){
 			if (test_2 = bind(test, this->_server_info->ai_addr, this->_server_info->ai_addrlen) != 0)
 			{
 				freeaddrinfo(this->_server_info);
-				throw ServerConnectionFailed();
+				// throw ServerConnectionFailed();
 				continue ;
 			}
 			this->_sockfd = test;
 			break ;
 		}
+		close(this->_sockfd);
 		freeaddrinfo(this->_server_info);
 		throw ServerConnectionFailed();
 	}
@@ -108,6 +116,10 @@ void	Server::start(){
 		freeaddrinfo(this->_server_info);
 		throw e ;
 	}
+	close(this->_sockfd);
+	i = 0;
+	while (i < 1024 && this->_connection_fds[i] != NULL)
+		close (this->_connection_fds[i++]);
 	std::cout << "starting at port: " << this->_port << std::endl;
 	freeaddrinfo(this->_server_info);
 }
