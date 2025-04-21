@@ -10,12 +10,13 @@ class Request{
 		std::string					_cmd;
 		std::vector<std::string>	_args;
 	public:
-		Request(std::string cmd, std::vector<std::string> args);
-		Request(Request &copy);
-		Request& operator=(Request &old);
+		Request(std::string const cmd, std::vector<std::string> const args);
+		Request(Request const &copy);
+		Request &operator=(Request const &old);
 		~Request();
 
 		std::string const getCommand() const;
+		std::vector<std::string> const getArgs() const;
 };
 
 #endif
