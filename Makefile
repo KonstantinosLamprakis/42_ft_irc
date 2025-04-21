@@ -9,9 +9,9 @@ FLAGS = -Wall -Wextra -Werror
 CPP_STANDARD = -std=c++98
 
 SRC_FILES = Server.cpp \
+Request.cpp \
 # User.cpp \
 # Channel.cpp \
-# Request.cpp \
 
 
 HEADERS_FILES = $(HEADERS_FOLDER)/User.hpp \

@@ -1,14 +1,13 @@
 #include "../headers/Server.hpp"
-Server::Server() {}
 
 Server::Server() : _port(0), _password("") {}
 
-Server::Server(Server &copy){
-	// if server is ready -> fill the copy constructor
-}
+Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
 
 Server& Server::operator=(Server &old){
-	//if server is ready -> fill the assignement operator
+    this->_port = old._port;
+    this->_password = old._password;    
+    return (*this);
 }
 
 Server::~Server() {}
@@ -22,11 +21,14 @@ void Server::start(){
     std::cout << "starting at port: " << this->_port << std::endl;
 }
 
-Request Server::parse(std::string input){
+Request Server::parse(std::string input) {
     std::cout << input;
-    return Request();
+    std::vector<std::string> args;
+    args.push_back("test"); 
+    Request req("command", args); 
+    return req;
 }
 
 void Server::execute(Request request){
-    request = Request();
+    std::cout << request.getCommand() << std::endl;
 }
