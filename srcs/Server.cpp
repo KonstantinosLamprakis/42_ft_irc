@@ -61,6 +61,10 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 		std::cout << "Listen failed" << std::endl;
 		// throw ClientConnectionFailed() ;
 	}
+	this->_connection_fds[0].fd = this->_sockfd;
+	this->_connection_fds[0].events = 0;
+	this->_connection_fds[0].events = POLLIN;
+	this->_connection_fds[0].revents = 0;
 	if (tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket)) == -1)
 	{
 		std::cout << "Accept failed" << std::endl;
@@ -68,16 +72,16 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	}
 	else
 	{
-		if (this->_size_pollfd_struct < MAX_CONNECTIONS)
-		{
-			this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
-			this->_size_pollfd_struct++;
-		}
-		else
-		{
-			std::cout << "The maximum amount of connections is reached" << std::endl;
-			return ;
-		}
+		// if (this->_size_pollfd_struct < MAX_CONNECTIONS)
+		// {
+		// 	this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
+		// 	this->_size_pollfd_struct++;
+		// }
+		// else
+		// {
+		// 	std::cout << "The maximum amount of connections is reached" << std::endl;
+		// 	return ;
+		// }
 		this->run_connection(tmp);
 	}
 }
