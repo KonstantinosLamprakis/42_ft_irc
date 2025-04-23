@@ -14,6 +14,16 @@
 # include "Request.hpp"
 # include "User.hpp"
 
+const std::string SPACE = "\t\n ";
+const std::string CRLF = "\r\n";
+
+	namespace Command {
+		const std::string PASS = "PASS";
+		const std::string NICK = "NICK";
+		const std::string USER = "USER";
+		const std::string QUIT = "QUIT"};
+
+
 class Server
 {
 	private:
@@ -23,18 +33,22 @@ class Server
 		struct	addrinfo*	_server_info;
 		int					_connection_fds[MAX_CONNECTIONS];
 		
+
+
 	public:
 		Server();
 		Server(int port, std::string password);
 		Server(Server &copy);
-		Server& operator=(Server &old);
+		Server &operator=(Server &old);
 		~Server();
 
 		void	start();
-		Request	parse(std::string input);
+		Request	_parse(std::string input) const;
 		void	execute(Request request);
 		void	listentosocket();
 		void	run_connection(int fd);
+
+
 };
 
 #endif

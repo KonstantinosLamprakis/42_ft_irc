@@ -9,8 +9,8 @@ int main (int ac, char **argv){
 		irc_server.start();
 	}
 	catch(const std::exception& e){
-		std::cerr << e.what() << std::endl;
-		return 1;
+		std::cerr << "Error: " << e.what() << std::endl;
+		return (1);
 	}
 }
 
@@ -23,12 +23,12 @@ int main (int ac, char **argv){
  */
 void validateInput(int ac, char **argv){
 	if (ac != 3){
-        throw std::runtime_error("Error: expected 3 arguments.\nUsage: ./ircserv <port> <password>");
+        throw std::runtime_error("Expected 3 arguments.\nUsage: ./ircserv <port> <password>");
 	}
 
 	std::string portStr = argv[1];
 	for (size_t i = 0; i < portStr.size(); ++i) {
-		if (portStr[i] < '0' || portStr[i] > '9') throw std::runtime_error("Error: port should only contain digits") ;
+		if (portStr[i] < '0' || portStr[i] > '9') throw std::runtime_error("Port should only contain digits.") ;
     }
 
 	if (portStr.size() > 5 || std::stoi(portStr) > 65535 || std::stoi(portStr) < 1025){
