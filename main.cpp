@@ -1,9 +1,18 @@
 #include "./headers/Server.hpp"
+#include "./headers/Helper.hpp"
+
 
 void validateInput(int ac, char **argv);
 
-int main (int ac, char **argv){
+int main (int ac, char **argv)
+{
+	struct sigaction	s;
+
+	memset (&s, 0, sizeof (s));
+	s.sa_handler = &signal_handler;
 	try{
+		sigaction(SIGINT, &s, NULL);
+		sigaction(SIGQUIT, &s, NULL);
 		validateInput(ac, argv);
 		Server	irc_server(std::stoi(argv[1]), argv[2]);
 		irc_server.start();

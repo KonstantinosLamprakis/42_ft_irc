@@ -152,8 +152,8 @@ void	Server::start(){
 		// freeaddrinfo(this->_server_info);
 		throw e ;
 	}
-	close_and_free_socket(NULL);
 	close_connections();
+	close_and_free_socket(NULL);
 }
 
 Request Server::parse(std::string input) const {
