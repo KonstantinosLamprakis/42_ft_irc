@@ -32,7 +32,7 @@ class Server
 		std::string 		_password;
 		int					_sockfd;
 		struct	addrinfo*	_server_info;
-		int					_connection_fds[MAX_CONNECTIONS];
+		struct pollfd		_connection_fds[MAX_CONNECTIONS];
 
 	public:
 		Server();
@@ -47,6 +47,7 @@ class Server
 		void	listentosocket();
 		void	run_connection(int fd);
 		void	close_and_free_socket(std::string err_msg);
+		void	close_connections();
 };
 
 #endif

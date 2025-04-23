@@ -90,7 +90,6 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
  * @param tmp struct to check all generated versions in linked list which one is working
  * @param test all solutions in the linked list get tested - if one of them works we continue to try bind
  * @param yes value to set flag in setsockopt function (refered to as address) - probably not necessary and &1 would be enough
- * @param i iterator
  * @return "running connection"
  */
 
@@ -99,7 +98,7 @@ void	Server::start(){
 	struct	addrinfo*	tmp;
 	int					test;
 	int					yes = 1;
-	int					i = 0;
+
 
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
@@ -151,8 +150,7 @@ void	Server::start(){
 		throw e ;
 	}
 	close_and_free_socket(NULL);
-	while (i < 1024 && this->_connection_fds[i] != NULL)
-		close (this->_connection_fds[i++]);
+	close_connections();
 }
 
 Request Server::parse(std::string input) const {
@@ -188,8 +186,16 @@ void Server::execute(Request request){
 
 void	Server::close_and_free_socket(std::string err_msg)
 {
-	if (err_msg != NULL)
+	if (err_msg.empty())
 		std::cout << err_msg << std::endl;
 	close(this->_sockfd);
 	freeaddrinfo(this->_server_info);
+}
+
+void	Server::close_connections()
+{
+	int	i = 0;
+
+	while (i < 1024 && this->_connection_fds[i] != NULL)
+		close (this->_connection_fds[i++]->fd);
 }
