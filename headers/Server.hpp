@@ -10,7 +10,7 @@
 # include <netdb.h>
 # include <exception>
 # include <unistd.h>
-# include <sys/fcntl.h>
+# include <fcntl.h>
 
 # include "Request.hpp"
 # include "User.hpp"
@@ -48,6 +48,5 @@ class Server
 		void	run_connection(int fd);
 		void	close_and_free_socket(std::string err_msg);
 };
-
 
 #endif

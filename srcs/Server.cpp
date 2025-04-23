@@ -115,8 +115,6 @@ void	Server::start(){
 	{
 		if (test = socket(this->_server_info->ai_family, this->_server_info->ai_socktype, this->_server_info->ai_protocol) == -1)
 		{
-			// freeaddrinfo(this->_server_info);
-			// throw ServerConnectionFailed();
 			continue ;
 		}
 		else
@@ -134,7 +132,7 @@ void	Server::start(){
 			this->_sockfd = test;
 			if (fcntl(this->_sockfd, F_SETFL, O_NONBLOCK) == -1)
 			{
-				close_and_free_socket("opening a non blocking connection didn't work");
+				close_and_free_socket("opening a non-blocking connection didn't work");
 				throw ServerConnectionFailed();
 			}
 			break ;
@@ -148,13 +146,13 @@ void	Server::start(){
 	}
 	catch(const std::exception &e)
 	{
-		freeaddrinfo(this->_server_info);
+		close_and_free_socket(NULL);
+		// freeaddrinfo(this->_server_info);
 		throw e ;
 	}
-	close(this->_sockfd);
+	close_and_free_socket(NULL);
 	while (i < 1024 && this->_connection_fds[i] != NULL)
 		close (this->_connection_fds[i++]);
-	freeaddrinfo(this->_server_info);
 }
 
 Request Server::parse(std::string input) const {
