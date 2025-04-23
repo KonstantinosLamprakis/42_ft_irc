@@ -1,14 +1,14 @@
 #include "../headers/Server.hpp"
-Server::Server() {}
+#include <sstream>
 
 Server::Server() : _port(0), _password("") {}
 
-Server::Server(Server &copy){
-	// if server is ready -> fill the copy constructor
-}
+Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
 
-Server& Server::operator=(Server &old){
-	//if server is ready -> fill the assignement operator
+Server &Server::operator=(Server &old){
+    this->_port = old._port;
+    this->_password = old._password;    
+    return (*this);
 }
 
 Server::~Server() {}
@@ -22,11 +22,33 @@ void Server::start(){
     std::cout << "starting at port: " << this->_port << std::endl;
 }
 
-Request Server::parse(std::string input){
-    std::cout << input;
-    return Request();
+Request Server::_parse(std::string input) const {
+    if (input.empty()) {
+        throw std::invalid_argument("Input cannot be empty.");
+    } else if (SPACE.find(input[0]) != std::string::npos) {
+        throw std::invalid_argument("Input cannot start with a space.");
+    } else if (input.size() >= 2 && input.substr(input.size() - 2) != CRLF) {
+        throw std::invalid_argument("Input should end with \r\n characters.");
+    }
+
+    std::string command;
+    std::vector<std::string> args;
+    std::istringstream stream(input);
+    std::string word;
+
+    if (stream >> command) {
+        args.push_back(command);
+        while (stream >> word) {
+            args.push_back(word);
+        }
+    }
+
+    return Request(command, args);
 }
 
-void Server::execute(Request request){
-    request = Request();
+void Server::_execute(Request request){
+	if (request.getCommand() == Command::PASS) // TODO(KL)
+        std::cout << "PASS" << std::endl;
+	else
+        throw std::invalid_argument("Invalid command.");
 }
