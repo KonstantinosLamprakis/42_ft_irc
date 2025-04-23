@@ -68,10 +68,11 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	}
 	else
 	{
-		while (i < MAX_CONNECTIONS && this->_connection_fds[i] != NULL)
-			i++;
-		if (i < MAX_CONNECTIONS)
-			this->_connection_fds[i] = tmp;
+		if (this->_size_pollfd_struct < MAX_CONNECTIONS)
+		{
+			this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
+			this->_size_pollfd_struct++;
+		}
 		else
 		{
 			std::cout << "The maximum amount of connections is reached" << std::endl;
@@ -141,6 +142,8 @@ void	Server::start(){
 	}
 	try
 	{
+		this->_connection_fds[0].fd = this->_sockfd;
+		this->_size_pollfd_struct = 1;
 		this->listentosocket();
 	}
 	catch(const std::exception &e)
@@ -194,8 +197,8 @@ void	Server::close_and_free_socket(std::string err_msg)
 
 void	Server::close_connections()
 {
-	int	i = 0;
+	int	i = 1;
 
-	while (i < 1024 && this->_connection_fds[i] != NULL)
-		close (this->_connection_fds[i++]->fd);
+	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != 0)
+		close (this->_connection_fds[i++].fd);
 }

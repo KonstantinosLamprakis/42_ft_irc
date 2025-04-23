@@ -11,6 +11,7 @@
 # include <exception>
 # include <unistd.h>
 # include <fcntl.h>
+# include <poll.h>
 
 # include "Request.hpp"
 # include "User.hpp"
@@ -32,9 +33,10 @@ class Server
 		std::string 		_password;
 		int					_sockfd;
 		struct	addrinfo*	_server_info;
-		struct pollfd		_connection_fds[MAX_CONNECTIONS];
+		struct	pollfd		_connection_fds[MAX_CONNECTIONS]; //events; POLLIN, POLLOUT, POLLERR. POLLRDHUP, POLLNVAL, POLLWRNORM// all fds set to null in constructor 
+		int					_size_pollfd_struct; // set to 0 in constructor
 
-	public:
+		public:
 		Server();
 		Server(int port, std::string password);
 		Server(Server &copy);
