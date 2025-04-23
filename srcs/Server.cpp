@@ -34,7 +34,7 @@ Server::Server(int port, std::string password){
  * @return "running 1 on 1 connection"
  */
 
-void	run_connection(int fd)
+void	Server::run_connection(int fd)
 {
 	User User(fd);
 
@@ -73,7 +73,10 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 		if (i < MAX_CONNECTIONS)
 			this->_connection_fds[i] = tmp;
 		else
+		{
 			std::cout << "The maximum amount of connections is reached" << std::endl;
+			return ;
+		}
 		this->run_connection(tmp);
 	}
 }
@@ -86,8 +89,7 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
  * @param server_hints input for getaddrinfo function - contains flags used to define server_info
  * @param tmp struct to check all generated versions in linked list which one is working
  * @param test all solutions in the linked list get tested - if one of them works we continue to try bind
- * @param test_2 the existing sockets get tested - if one of them works we continue with it 
- * @param yes value to set flag in setsockopt function (refered to as address)
+ * @param yes value to set flag in setsockopt function (refered to as address) - probably not necessary and &1 would be enough
  * @param i iterator
  * @return "running connection"
  */
@@ -96,7 +98,6 @@ void	Server::start(){
 	struct	addrinfo	server_hints;
 	struct	addrinfo*	tmp;
 	int					test;
-	int					test_2;
 	int					yes = 1;
 	int					i = 0;
 
@@ -114,24 +115,31 @@ void	Server::start(){
 	{
 		if (test = socket(this->_server_info->ai_family, this->_server_info->ai_socktype, this->_server_info->ai_protocol) == -1)
 		{
-			freeaddrinfo(this->_server_info);
+			// freeaddrinfo(this->_server_info);
 			// throw ServerConnectionFailed();
 			continue ;
 		}
 		else
 		{
-			setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)); // option to allow reusage of the same port without waiting incl keeping up connections
-			if (test_2 = bind(test, this->_server_info->ai_addr, this->_server_info->ai_addrlen) != 0)
+			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1); // option to allow reusage of the same port without waiting incl keeping up connections
 			{
-				freeaddrinfo(this->_server_info);
-				// throw ServerConnectionFailed();
-				continue ;
+				close_and_free_socket("setting up socket didn't work properly");
+				throw ServerConnectionFailed();
+			}
+			if (bind(test, this->_server_info->ai_addr, this->_server_info->ai_addrlen) != 0)
+			{
+				close_and_free_socket("binding socket didn't work");
+				throw ServerConnectionFailed();
 			}
 			this->_sockfd = test;
+			if (fcntl(this->_sockfd, F_SETFL, O_NONBLOCK) == -1)
+			{
+				close_and_free_socket("opening a non blocking connection didn't work");
+				throw ServerConnectionFailed();
+			}
 			break ;
 		}
-		close(this->_sockfd);
-		freeaddrinfo(this->_server_info);
+		close_and_free_socket(NULL);
 		throw ServerConnectionFailed();
 	}
 	try
@@ -150,32 +158,40 @@ void	Server::start(){
 }
 
 Request Server::parse(std::string input) const {
-    if (input.empty()) {
-        throw std::invalid_argument("Input cannot be empty.");
-    } else if (SPACE.find(input[0]) != std::string::npos) {
-        throw std::invalid_argument("Input cannot start with a space.");
-    } else if (input.size() >= 2 && input.substr(input.size() - 2) != CRLF) {
-        throw std::invalid_argument("Input should end with \r\n characters.");
-    }
+	if (input.empty()) {
+		throw std::invalid_argument("Input cannot be empty.");
+	} else if (SPACE.find(input[0]) != std::string::npos) {
+		throw std::invalid_argument("Input cannot start with a space.");
+	} else if (input.size() >= 2 && input.substr(input.size() - 2) != CRLF) {
+		throw std::invalid_argument("Input should end with \r\n characters.");
+	}
 
-    std::string command;
-    std::vector<std::string> args;
-    std::istringstream stream(input);
-    std::string word;
+	std::string command;
+	std::vector<std::string> args;
+	std::istringstream stream(input);
+	std::string word;
 
-    if (stream >> command) {
-        args.push_back(command);
-        while (stream >> word) {
-            args.push_back(word);
-        }
-    }
+	if (stream >> command) {
+		args.push_back(command);
+		while (stream >> word) {
+			args.push_back(word);
+		}
+	}
 
-    return Request(command, args);
+	return Request(command, args);
 }
 
 void Server::execute(Request request){
 	if (request.getCommand() == Command::PASS) // TODO(KL)
-        std::cout << "PASS" << std::endl;
+		std::cout << "PASS" << std::endl;
 	else
-        throw std::invalid_argument("Invalid command.");
+		throw std::invalid_argument("Invalid command.");
+}
+
+void	Server::close_and_free_socket(std::string err_msg)
+{
+	if (err_msg != NULL)
+		std::cout << err_msg << std::endl;
+	close(this->_sockfd);
+	freeaddrinfo(this->_server_info);
 }
