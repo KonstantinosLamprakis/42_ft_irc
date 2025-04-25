@@ -51,6 +51,8 @@ class Server
 		void	run_connection(int fd);
 		void	close_and_free_socket(std::string err_msg);
 		void	close_connections();
+		void	accept_connection(int i);
+		void	communicate(int i);
 };
 
 #endif
