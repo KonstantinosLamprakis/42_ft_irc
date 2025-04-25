@@ -1,5 +1,7 @@
 #include "../headers/Server.hpp"
 #include "../headers/Exceptions.hpp"
+#include "../headers/Helper.hpp"
+
 #include <sstream>
 
 Server::Server()
@@ -65,25 +67,30 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	this->_connection_fds[0].events = 0;
 	this->_connection_fds[0].events = POLLIN;
 	this->_connection_fds[0].revents = 0;
-	if (tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket)) == -1)
+	while (signal_status == false)
 	{
-		std::cout << "Accept failed" << std::endl;
-		// throw ClientConnectionFailed() ;
+		if (tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket)) == -1)
+		{
+			std::cout << "Accept failed" << std::endl;
+			// throw ClientConnectionFailed() ;
+		}
+		else
+		{
+			// if (this->_size_pollfd_struct < MAX_CONNECTIONS)
+			// {
+			// 	this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
+			// 	this->_size_pollfd_struct++;
+			// }
+			// else
+			// {
+			// 	std::cout << "The maximum amount of connections is reached" << std::endl;
+			// 	return ;
+			// }
+			this->run_connection(tmp);
+		}
+
 	}
-	else
-	{
-		// if (this->_size_pollfd_struct < MAX_CONNECTIONS)
-		// {
-		// 	this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
-		// 	this->_size_pollfd_struct++;
-		// }
-		// else
-		// {
-		// 	std::cout << "The maximum amount of connections is reached" << std::endl;
-		// 	return ;
-		// }
-		this->run_connection(tmp);
-	}
+
 }
 
 /**
@@ -121,8 +128,8 @@ void	Server::start(){
 		{
 			continue ;
 		}
-		else
-		{
+			else
+			{
 			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1); // option to allow reusage of the same port without waiting incl keeping up connections
 			{
 				close_and_free_socket("setting up socket didn't work properly");
@@ -141,6 +148,8 @@ void	Server::start(){
 			}
 			break ;
 		}
+		if (tmp == NULL)
+			throw ServerConnectionFailed;
 		close_and_free_socket(NULL);
 		throw ServerConnectionFailed();
 	}
@@ -203,6 +212,6 @@ void	Server::close_connections()
 {
 	int	i = 1;
 
-	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != 0)
+	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != -1)
 		close (this->_connection_fds[i++].fd);
 }
