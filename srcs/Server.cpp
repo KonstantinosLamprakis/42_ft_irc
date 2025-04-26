@@ -57,7 +57,7 @@ void	Server::communicate(int i)
  * @return "new fd_connections struct array which is added to the _onnection_fds in server"
  */
 
-void	Server::accept_connection(int i)
+void	Server::accept_connection()
 {
 	int				tmp = 0;
 	sockaddr		comm_socket;
@@ -91,8 +91,8 @@ void	Server::accept_connection(int i)
 void	Server::listentosocket() //not directly throw error - server should keep running
 {
 	int		err = 0;
-	char	test[1024];
-	int		byte_count = 0;
+	char	test[1024]; //std::string possible?
+
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
@@ -117,27 +117,25 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
 			{
 				if (this->_connection_fds[i].fd == this->_sockfd)
-					this->accept_connection(i);
+					this->accept_connection();
 				else
 					this->communicate(i);// not defined yet
 			}
 			if (this->_connection_fds[i].revents & POLLHUP)
 			{
-				if (this->_connection_fds[i].fd == this->_sockfd)
+				if (this->_connection_fds[i].fd == this->_sockfd) // does this make sense? - if bind socket is gone server is off, right?
 					break ;
 				else
 				{
 					if (recv(this->_connection_fds[i].fd, test, sizeof(test), 0) == 0)
 					{
-						close (this->_connection_fds[i].fd);
+						close (this->_connection_fds[i].fd); //this way the array is not adapted - the size stays the same(has to be changed when using vector)
 						this->_connection_fds[i].revents = 0;
 						this->_connection_fds[i].fd = -1;
 					}
 				}
 			}
-			
 		}
-		//handle reception of data
 	}
 }
 

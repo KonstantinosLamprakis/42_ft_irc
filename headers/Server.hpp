@@ -55,7 +55,7 @@ class Server
 		// void	run_connection(int fd);
 		void	close_and_free_socket(std::string err_msg);
 		void	close_connections();
-		void	accept_connection(int i);
+		void	accept_connection();
 		void	communicate(int i);
 		static void	signal_handler(int signal);
 
