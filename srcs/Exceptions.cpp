@@ -1,4 +1,4 @@
-#include "Exceptions.hpp"
+#include "../headers/Exceptions.hpp"
 
 const char* ServerConnectionFailed::what() const throw()
 {

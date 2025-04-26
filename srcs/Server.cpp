@@ -4,19 +4,26 @@
 
 #include <sstream>
 
-extern bool signal_status;
-
 // Server::Server()
 // {
 // 	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
 // }
+bool Server::_signal_status = false;
 
 Server::Server() : _port(0), _password("") 
 {
 	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+	this->_sockfd = -1;
+	this->_server_info = NULL;
+	this->_size_pollfd_struct = 0;
+	// Server::_signal_status = false;
+	for (int i = 0; i < MAX_CONNECTIONS; i++)
+		this->_connection_fds[i].fd = -1;
 }
 
 Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
+
+Server::~Server(){}
 
 Server &Server::operator=(Server &old){
     this->_port = old._port;
@@ -27,6 +34,13 @@ Server &Server::operator=(Server &old){
 Server::Server(int port, std::string password){
 	this->_port = port;
 	this->_password = password;
+	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+	this->_sockfd = -1;
+	this->_server_info = NULL;
+	this->_size_pollfd_struct = 0;
+	// Server::_signal_status = false;
+	for (int i = 0; i < MAX_CONNECTIONS; i++)
+		this->_connection_fds[i].fd = -1;
 }
 
 /**
@@ -103,7 +117,7 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	this->_connection_fds[0].events = 0;
 	this->_connection_fds[0].events = POLLIN;
 	this->_connection_fds[0].revents = 0;
-	while (signal_status == false)
+	while (Server::_signal_status == false)
 	{
 		if (poll(this->_connection_fds, this->_size_pollfd_struct, -1) == -1) // has to be redone every time new conenctions appear
 			throw ClientConnectionFailed();
@@ -243,4 +257,10 @@ void	Server::close_connections()
 
 	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != -1)
 		close (this->_connection_fds[i++].fd);
+}
+
+void	Server::signal_handler(int signal)
+{
+	(void)signal;
+	Server::_signal_status = true;
 }

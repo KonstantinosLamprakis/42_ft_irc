@@ -1,6 +1,7 @@
 #ifndef EXCEPTIONS_HPP
 # define EXCEPTIONS_HPP
 
+# include <exception>
 
 class	ServerConnectionFailed : public std::exception
 {

@@ -36,6 +36,7 @@ class Server
 		struct	addrinfo*	_server_info;
 		struct	pollfd		_connection_fds[MAX_CONNECTIONS]; //events; POLLIN, POLLOUT, POLLERR. POLLHUP, POLLNVAL, POLLWRNORM// all fds set to -1 in constructor
 		int					_size_pollfd_struct; // set to 0 in constructor
+		static bool			_signal_status; // set to false in constructor
 
 		public:
 		Server();
@@ -48,11 +49,14 @@ class Server
 		Request parse(std::string input) const;
 		void	execute(Request request);
 		void	listentosocket();
-		void	run_connection(int fd);
+		// void	run_connection(int fd);
 		void	close_and_free_socket(std::string err_msg);
 		void	close_connections();
 		void	accept_connection(int i);
 		void	communicate(int i);
+		static void	signal_handler(int signal);
+
+
 };
 
 #endif
