@@ -43,10 +43,19 @@ Server::Server(int port, std::string password){
 	this->_size_pollfd_struct = 0;
 }
 
-// void	Server::send_data(Request in)
+// void	Server::send_data(Request in) //  can be done if request exists (sening msg to either channel or user or all)
 // {
 // 	(void)in;
 // }
+
+/**
+ * @brief receives, reads and if necessary forwards message or executes command
+ * 
+ * @param buff temporary storage to recv data 
+ * @param bytes_recvd return value of recv - amount of char read
+ * @param str whole string - not yet sure whether necessary
+ * @return "new fd_connections struct array which is added to the _onnection_fds in server"
+ */
 
 void	Server::communicate(int i)
 {
@@ -65,13 +74,13 @@ void	Server::communicate(int i)
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
 			close (this->_connection_fds[i].fd);
 			this->_connection_fds[i].revents = 0;
-			this->_connection_fds[i].fd = -1; // right now just extanding an not reducing fds - needs to be fixed with vector
+			this->_connection_fds[i].fd = -1; // right now just extanding and not reducing fds - needs to be fixed with vector
 			return ;
 		}
 		str = str + buff;
 	}
 	// Request in = parse(str);
-	// send_data(in);
+	// execute_command; -> e.g. send_data(in);
 }
 
 /**
@@ -96,6 +105,7 @@ void	Server::accept_connection()
 		{
 			this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
 			this->_size_pollfd_struct++;
+			// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
 		}
 		else
 		{
@@ -121,7 +131,7 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
-		// throw ClientConnectionFailed() ;
+		throw ClientConnectionFailed() ;
 	}
 	this->_connection_fds[0].fd = this->_sockfd;
 	this->_connection_fds[0].events = 0;
@@ -144,7 +154,7 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 				if (this->_connection_fds[i].fd == this->_sockfd)
 					this->accept_connection();
 				else
-					this->communicate(i);// not defined yet
+					this->communicate(i);
 			}
 			if (this->_connection_fds[i].revents & POLLHUP)
 			{

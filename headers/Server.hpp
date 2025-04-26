@@ -41,6 +41,7 @@ class Server
 		struct	pollfd		_connection_fds[MAX_CONNECTIONS]; //events; POLLIN, POLLOUT, POLLERR. POLLHUP, POLLNVAL, POLLWRNORM// all fds set to -1 in constructor
 		int					_size_pollfd_struct; // set to 0 in constructor
 		static bool			_signal_status; // set to false in constructor
+		// std::vector<User>	_members;
 
 		public:
 		Server();
@@ -59,6 +60,7 @@ class Server
 		void		communicate(int i);
 		static void	signal_handler(int signal);
 		// void		send_data(Request in);
+		//void		add_member();
 
 
 };
