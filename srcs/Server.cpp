@@ -35,7 +35,7 @@ Server::Server(int port, std::string password){
 	for (int i = 0; i < MAX_CONNECTIONS; i++)
 	{
 		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN & POLLOUT & POLLERR & POLLHUP & POLLNVAL & POLLWRNORM;
+		this->_connection_fds[i].events = POLLIN & POLLHUP;
 		this->_connection_fds[i].revents = 0;
 	}
 	this->_sockfd = -1;
@@ -43,19 +43,6 @@ Server::Server(int port, std::string password){
 	this->_size_pollfd_struct = 0;
 }
 
-/**
- * @brief initializes User and handles recv and send for the individual connection?! - need to think about that again
- * 
- * @param User each client gets own user incl. fd and data
- * @return "running 1 on 1 connection"
- */
-
-// void	Server::run_connection(int fd)
-// {
-// 	User User(fd);
-
-// 	//here the class needs to be filled with the input data from the "login connection to the server"
-// }
 
 void	Server::communicate(int i)
 {
@@ -67,7 +54,7 @@ void	Server::communicate(int i)
  * 
  * @param tmp temporary storage of the fd for the new connection
  * @param comm_socket input for accept; saves the communication socket for the connection requested
- * @return "new fd_connections struct array"
+ * @return "new fd_connections struct array which is added to the _onnection_fds in server"
  */
 
 void	Server::accept_connection(int i)
@@ -75,26 +62,21 @@ void	Server::accept_connection(int i)
 	int				tmp = 0;
 	sockaddr		comm_socket;
 
-	if (this->_connection_fds[i].fd == this->_sockfd) // if new client asks for access
+	tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket));
+	if (tmp < 0)
+		std::cout << "Accept failed" << std::endl;
+	else
 	{
-		tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket));
-		if (tmp < 0)
-			std::cout << "Accept failed" << std::endl;
+		if (this->_size_pollfd_struct < MAX_CONNECTIONS)
+		{
+			this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
+			this->_size_pollfd_struct++;
+		}
 		else
 		{
-			if (this->_size_pollfd_struct < MAX_CONNECTIONS)
-			{
-				this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
-				this->_size_pollfd_struct++;
-			}
-			else
-			{
-				std::cout << "The maximum amount of connections is reached" << std::endl;
-				return ;
-			}
-			// this->run_connection(tmp);
+			std::cout << "The maximum amount of connections is reached" << std::endl;
+			return ;
 		}
-	
 	}
 }
 
@@ -132,11 +114,14 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 		{
 			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
 			{
-				this->accept_connection(i);
+				if (this->_connection_fds[i].fd == this->_sockfd)
+					this->accept_connection(i);
+				else
+					this->communicate(i);// not defined yet
 			}
-			else // for all clients connected to server
+			else
 			{
-				// this->communicate(i);// not defined yet
+				//send?
 			}
 		}
 		//handle reception of data
