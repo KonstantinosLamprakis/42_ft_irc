@@ -2,12 +2,6 @@
 #include "../headers/Exceptions.hpp"
 #include "../headers/Helper.hpp"
 
-#include <sstream>
-
-// Server::Server()
-// {
-// 	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
-// }
 bool Server::_signal_status = false;
 
 Server::Server() : _port(0), _password("") 
@@ -108,7 +102,8 @@ void	Server::accept_connection(int i)
  * @brief listens to the open socket of the server for incoming clients and requests
  * 
  * @param i iterator
- * @return "running connection"
+ * @param err return value used for error handling
+ * @return "running connection listening on _sockfd and adding client connections to connection_fds"
  */
 
 void	Server::listentosocket() //not directly throw error - server should keep running
@@ -125,14 +120,12 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	this->_connection_fds[0].revents = 0;
 	while (Server::_signal_status == false)
 	{
-		// std::cout << "Connection:" << this->_connection_fds[0].fd << ": " << this->_size_pollfd_struct << std::endl;
-		std::cout << "server signal: " << this->_signal_status << std::endl;
 		err = poll(&this->_connection_fds[0], this->_size_pollfd_struct, -1);
-		if (err == -1) // has to be redone every time new connection appear
+		if (err == -1)
 			throw ClientConnectionFailed();
 		else if (err == 0)
 		{
-			std::cout << "timeout" << std::endl;
+			std::cout << "timeout" << std::endl; 
 			throw ClientConnectionFailed();
 		}
 		for (int i = 0; i < this->_size_pollfd_struct; i++)
@@ -162,18 +155,17 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
  * @return "running connection"
  */
 
-void	Server::start(){
+void	Server::start()
+{
 	struct	addrinfo	server_hints;
 	struct	addrinfo*	tmp;
 	int					test = 0;
 	int					yes = 1;
 
-
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
 	server_hints.ai_socktype = SOCK_STREAM; //TCP makes sense for us (option would be UDP)
-	server_hints.ai_flags = AI_PASSIVE; 
-	// std::cout << "Socktype" << this->_server_info->ai_socktype << " AI Protocol: " << _server_info->ai_protocol << std::endl;
+	server_hints.ai_flags = AI_PASSIVE;
 
 	if (getaddrinfo(NULL, std::to_string(this->_port).c_str(), &server_hints, &this->_server_info) != 0)
 	{
@@ -273,8 +265,5 @@ void	Server::close_connections()
 	int	i = 1;
 
 	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != -1)
-	{
-		close (this->_connection_fds[i].fd);
-		i++;
-	}
+		close (this->_connection_fds[i++].fd);
 }

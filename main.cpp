@@ -3,14 +3,6 @@
 #include "./headers/Exceptions.hpp"
 #include "./headers/Request.hpp"
 
-// static bool	signal_status = false; 
-
-// void	signal_handler(int signal)
-// {
-// 	(void)signal;
-// 	signal_status = true;
-// }
-
 /**
  * @brief Validates that the initial arguments are in format: ./ircserv <port> <password>
  * 
@@ -32,7 +24,6 @@ void validateInput(int ac, char **argv){
 		throw std::runtime_error("Error: port should only be between 1024 and 65535");
 	}
 }
-// void validateInput(int ac, char **argv);
 
 int main (int ac, char **argv)
 {
