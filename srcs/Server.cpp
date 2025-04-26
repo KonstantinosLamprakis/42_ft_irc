@@ -10,7 +10,7 @@ Server::Server() : _port(0), _password("")
 	for (int i = 0; i < MAX_CONNECTIONS; i++)
 	{
 		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN & POLLOUT & POLLERR & POLLHUP & POLLNVAL & POLLWRNORM;
+		this->_connection_fds[i].events = POLLIN & POLLHUP;
 		this->_connection_fds[i].revents = 0;
 	}
 	this->_sockfd = -1;
@@ -90,7 +90,9 @@ void	Server::accept_connection(int i)
 
 void	Server::listentosocket() //not directly throw error - server should keep running
 {
-	int	err = 0;
+	int		err = 0;
+	char	test[1024];
+	int		byte_count = 0;
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
@@ -119,10 +121,21 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 				else
 					this->communicate(i);// not defined yet
 			}
-			else
+			if (this->_connection_fds[i].revents & POLLHUP)
 			{
-				//send?
+				if (this->_connection_fds[i].fd == this->_sockfd)
+					break ;
+				else
+				{
+					if (recv(this->_connection_fds[i].fd, test, sizeof(test), 0) == 0)
+					{
+						close (this->_connection_fds[i].fd);
+						this->_connection_fds[i].revents = 0;
+						this->_connection_fds[i].fd = -1;
+					}
+				}
 			}
+			
 		}
 		//handle reception of data
 	}
