@@ -11,9 +11,9 @@ CPP_STANDARD = -std=c++17
 SRC_FILES = Server.cpp \
 Request.cpp \
 Exceptions.cpp \
-Helper.cpp
-# User.cpp
-# Channel.cpp
+Helper.cpp \
+# User.cpp \
+Channel.cpp
 
 
 HEADERS_FILES = $(HEADERS_FOLDER)/User.hpp \

@@ -43,10 +43,35 @@ Server::Server(int port, std::string password){
 	this->_size_pollfd_struct = 0;
 }
 
+// void	Server::send_data(Request in)
+// {
+// 	(void)in;
+// }
 
 void	Server::communicate(int i)
 {
-	(void)i; //  needs to be defined
+	char		buff[BUFFER_SIZE];
+	int			bytes_recvd = BUFFER_SIZE;
+	std::string	str = "";
+
+	while (bytes_recvd == BUFFER_SIZE)
+	{
+		bytes_recvd = recv(this->_connection_fds[i].fd, buff, sizeof(buff), 0);
+		if (bytes_recvd <= 0)
+		{
+			if (bytes_recvd < 0)
+				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
+			else
+				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
+			close (this->_connection_fds[i].fd);
+			this->_connection_fds[i].revents = 0;
+			this->_connection_fds[i].fd = -1; // right now just extanding an not reducing fds - needs to be fixed with vector
+			return ;
+		}
+		str = str + buff;
+	}
+	// Request in = parse(str);
+	// send_data(in);
 }
 
 /**
