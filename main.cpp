@@ -37,6 +37,7 @@ void validateInput(int ac, char **argv){
 int main (int ac, char **argv)
 {
 	struct sigaction	s;
+	Server				irc_server(std::stoi(argv[1]), argv[2]);
 
 	memset (&s, 0, sizeof (s));
 	s.sa_handler = (Server::signal_handler);
@@ -44,12 +45,13 @@ int main (int ac, char **argv)
 		sigaction(SIGINT, &s, NULL);
 		sigaction(SIGQUIT, &s, NULL);
 		validateInput(ac, argv);
-		Server	irc_server(std::stoi(argv[1]), argv[2]);
 		irc_server.start();
 	}
 	catch(const std::exception& e){
-		std::cerr << "Error: " << e.what() << std::endl;
 		return (1);
 	}
+	irc_server.close_connections();
+	irc_server.close_and_free_socket(std::string());
+	return (0);
 }
 

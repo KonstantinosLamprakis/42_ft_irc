@@ -12,13 +12,16 @@ bool Server::_signal_status = false;
 
 Server::Server() : _port(0), _password("") 
 {
-	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+	memset(this->_connection_fds, 0, MAX_CONNECTIONS * sizeof(_connection_fds[0]));
+	for (int i = 0; i < MAX_CONNECTIONS; i++)
+	{
+		this->_connection_fds[i].fd = -1;
+		this->_connection_fds[i].events = POLLIN & POLLOUT & POLLERR & POLLHUP & POLLNVAL & POLLWRNORM;
+		this->_connection_fds[i].revents = 0;
+	}
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_size_pollfd_struct = 0;
-	// Server::_signal_status = false;
-	for (int i = 0; i < MAX_CONNECTIONS; i++)
-		this->_connection_fds[i].fd = -1;
 }
 
 Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
@@ -26,21 +29,24 @@ Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
 Server::~Server(){}
 
 Server &Server::operator=(Server &old){
-    this->_port = old._port;
-    this->_password = old._password;    
-    return (*this);
+	this->_port = old._port;
+	this->_password = old._password;
+	return (*this);
 }
 
 Server::Server(int port, std::string password){
 	this->_port = port;
 	this->_password = password;
-	memset(this->_connection_fds, 0, MAX_CONNECTIONS);
+	memset(this->_connection_fds, 0, MAX_CONNECTIONS * sizeof(_connection_fds[0]));
+	for (int i = 0; i < MAX_CONNECTIONS; i++)
+	{
+		this->_connection_fds[i].fd = -1;
+		this->_connection_fds[i].events = POLLIN & POLLOUT & POLLERR & POLLHUP & POLLNVAL & POLLWRNORM;
+		this->_connection_fds[i].revents = 0;
+	}
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_size_pollfd_struct = 0;
-	// Server::_signal_status = false;
-	for (int i = 0; i < MAX_CONNECTIONS; i++)
-		this->_connection_fds[i].fd = -1;
 }
 
 /**
@@ -96,7 +102,6 @@ void	Server::accept_connection(int i)
 		}
 	
 	}
-
 }
 
 /**
@@ -108,6 +113,7 @@ void	Server::accept_connection(int i)
 
 void	Server::listentosocket() //not directly throw error - server should keep running
 {
+	int	err = 0;
 	if (listen(this->_sockfd, BACKLOG) != 0)
 	{
 		std::cout << "Listen failed" << std::endl;
@@ -119,8 +125,16 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	this->_connection_fds[0].revents = 0;
 	while (Server::_signal_status == false)
 	{
-		if (poll(this->_connection_fds, this->_size_pollfd_struct, -1) == -1) // has to be redone every time new conenctions appear
+		// std::cout << "Connection:" << this->_connection_fds[0].fd << ": " << this->_size_pollfd_struct << std::endl;
+		std::cout << "server signal: " << this->_signal_status << std::endl;
+		err = poll(&this->_connection_fds[0], this->_size_pollfd_struct, -1);
+		if (err == -1) // has to be redone every time new connection appear
 			throw ClientConnectionFailed();
+		else if (err == 0)
+		{
+			std::cout << "timeout" << std::endl;
+			throw ClientConnectionFailed();
+		}
 		for (int i = 0; i < this->_size_pollfd_struct; i++)
 		{
 			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
@@ -134,7 +148,6 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 		}
 		//handle reception of data
 	}
-
 }
 
 /**
@@ -160,6 +173,7 @@ void	Server::start(){
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
 	server_hints.ai_socktype = SOCK_STREAM; //TCP makes sense for us (option would be UDP)
 	server_hints.ai_flags = AI_PASSIVE; 
+	// std::cout << "Socktype" << this->_server_info->ai_socktype << " AI Protocol: " << _server_info->ai_protocol << std::endl;
 
 	if (getaddrinfo(NULL, std::to_string(this->_port).c_str(), &server_hints, &this->_server_info) != 0)
 	{
@@ -193,7 +207,7 @@ void	Server::start(){
 		}
 		if (tmp == NULL)
 			throw ServerConnectionFailed();
-		close_and_free_socket(NULL);
+		close_and_free_socket(std::string());
 		throw ServerConnectionFailed();
 	}
 	try
@@ -204,12 +218,10 @@ void	Server::start(){
 	}
 	catch(const std::exception &e)
 	{
-		close_and_free_socket(NULL);
-		// freeaddrinfo(this->_server_info);
+		close_connections();
+		close_and_free_socket(std::string());
 		throw e ;
 	}
-	close_connections();
-	close_and_free_socket(NULL);
 }
 
 Request Server::parse(std::string input) const {
@@ -232,7 +244,6 @@ Request Server::parse(std::string input) const {
 			args.push_back(word);
 		}
 	}
-
 	return Request(command, args);
 }
 
@@ -243,12 +254,18 @@ void Server::execute(Request request){
 		throw std::invalid_argument("Invalid command.");
 }
 
+void	Server::signal_handler(int signal)
+{
+	(void)signal;
+	Server::_signal_status = true;
+}
+
 void	Server::close_and_free_socket(std::string err_msg)
 {
 	if (err_msg.empty())
 		std::cout << err_msg << std::endl;
-	close(this->_sockfd);
 	freeaddrinfo(this->_server_info);
+	close(this->_sockfd);
 }
 
 void	Server::close_connections()
@@ -256,11 +273,8 @@ void	Server::close_connections()
 	int	i = 1;
 
 	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != -1)
-		close (this->_connection_fds[i++].fd);
-}
-
-void	Server::signal_handler(int signal)
-{
-	(void)signal;
-	Server::_signal_status = true;
+	{
+		close (this->_connection_fds[i].fd);
+		i++;
+	}
 }

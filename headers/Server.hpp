@@ -4,6 +4,7 @@
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
 # include <string>
+# include <cstring>
 # include <iostream>
 # include <sys/socket.h>
 # include <sys/types.h>
