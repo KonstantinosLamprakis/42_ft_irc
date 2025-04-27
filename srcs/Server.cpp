@@ -10,7 +10,7 @@ Server::Server() : _port(0), _password("")
 	for (int i = 0; i < MAX_CONNECTIONS; i++)
 	{
 		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN & POLLHUP;
+		this->_connection_fds[i].events = POLLIN | POLLHUP;
 		this->_connection_fds[i].revents = 0;
 	}
 	this->_sockfd = -1;
@@ -35,7 +35,7 @@ Server::Server(int port, std::string password){
 	for (int i = 0; i < MAX_CONNECTIONS; i++)
 	{
 		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN & POLLHUP;
+		this->_connection_fds[i].events = POLLIN | POLLHUP;
 		this->_connection_fds[i].revents = 0;
 	}
 	this->_sockfd = -1;
@@ -75,8 +75,12 @@ void	Server::communicate(int i)
 		}
 		str = str + buff;
 	}
-	// Request in = parse(str);
-	// execute_command; -> e.g. send_data(in);
+	try{
+		Request in = parse(str);
+		execute(in);
+	}catch(const std::exception &e){
+		std::cout << "Error: " << e.what() << std::endl;
+	}
 }
 
 void	Server::accept_connection() //accept connections to socket
@@ -222,8 +226,6 @@ Request Server::parse(std::string input) const {
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
 		throw std::invalid_argument("Input cannot start with a space.");
-	} else if (input.size() >= 2 && input.substr(input.size() - 2) != CRLF) {
-		throw std::invalid_argument("Input should end with \r\n characters.");
 	}
 
 	std::string command;
