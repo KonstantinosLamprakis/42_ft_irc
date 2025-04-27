@@ -162,7 +162,7 @@ void	Server::start()
 			continue ;
 		else
 		{
-			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) // option to allow reusage of the same port without waiting incl keeping up connections
+			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) //option to allow reusage of the same port without waiting incl keeping up connections
 			{
 				close_and_free_socket("setting up socket didn't work properly");
 				throw ServerConnectionFailed();
