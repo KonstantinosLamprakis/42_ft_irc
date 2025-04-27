@@ -34,35 +34,31 @@ namespace Command {
 class Server
 {
 	private:
-		int					_port;
-		std::string 		_password;
-		int					_sockfd;
-		struct	addrinfo*	_server_info;
-		struct	pollfd		_connection_fds[MAX_CONNECTIONS]; //events; POLLIN, POLLOUT, POLLERR. POLLHUP, POLLNVAL, POLLWRNORM// all fds set to -1 in constructor
-		int					_size_pollfd_struct; // set to 0 in constructor
-		static bool			_signal_status; // set to false in constructor
-		// std::vector<User>	_members;
+		int							_port;
+		std::string 				_password;
+		int							_sockfd;
+		struct	addrinfo*			_server_info;
+		// struct	pollfd			_connection_fds[MAX_CONNECTIONS];
+		std::vector<struct pollfd>	_connection_fds;
+		int							_amnt_connections;
+		static bool					_signal_status;
+		// std::vector<User>		_members;
 
 		public:
 		Server();
 		Server(int port, std::string password);
-		Server(Server &copy);
-		Server &operator=(Server &old);
-		~Server();
 
 		void		start();
 		Request 	parse(std::string input) const;
 		void		execute(Request request);
 		void		listentosocket();
 		void		close_and_free_socket(std::string err_msg);
-		void		close_connections();
 		void		accept_connection();
 		void		communicate(int i);
 		static void	signal_handler(int signal);
-		// void		send_data(Request in);
+		pollfd		init_pollfd();
+		//void		send_data(Request in);
 		//void		add_member();
-
-
 };
 
 #endif
