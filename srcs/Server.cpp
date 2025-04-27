@@ -4,43 +4,34 @@
 
 bool Server::_signal_status = false;
 
-Server::Server() : _port(0), _password("") 
+pollfd	Server::init_pollfd()
 {
-	memset(this->_connection_fds, 0, MAX_CONNECTIONS * sizeof(_connection_fds[0]));
-	for (int i = 0; i < MAX_CONNECTIONS; i++)
-	{
-		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN | POLLHUP;
-		this->_connection_fds[i].revents = 0;
-	}
-	this->_sockfd = -1;
-	this->_server_info = NULL;
-	this->_size_pollfd_struct = 0;
+	struct pollfd	new_pollfd;
+
+	memset(&new_pollfd, 0, sizeof(new_pollfd));
+	new_pollfd.fd = -1;
+	new_pollfd.events = POLLIN | POLLHUP;
+	new_pollfd.revents = 0;
+	return (new_pollfd);
 }
 
-Server::Server(Server &copy): _port(copy._port), _password(copy._password){}
-
-Server::~Server(){}
-
-Server &Server::operator=(Server &old){
-	this->_port = old._port;
-	this->_password = old._password;
-	return (*this);
+Server::Server() 
+{
+	this->_port = -1;
+	this->_password = "";
+	this->_connection_fds.push_back(init_pollfd());
+	this->_sockfd = -1;
+	this->_server_info = NULL;
+	this->_amnt_connections = 0;
 }
 
 Server::Server(int port, std::string password){
 	this->_port = port;
 	this->_password = password;
-	memset(this->_connection_fds, 0, MAX_CONNECTIONS * sizeof(_connection_fds[0]));
-	for (int i = 0; i < MAX_CONNECTIONS; i++)
-	{
-		this->_connection_fds[i].fd = -1;
-		this->_connection_fds[i].events = POLLIN | POLLHUP;
-		this->_connection_fds[i].revents = 0;
-	}
+	this->_connection_fds.push_back(init_pollfd());
 	this->_sockfd = -1;
 	this->_server_info = NULL;
-	this->_size_pollfd_struct = 0;
+	this->_amnt_connections = 0;
 }
 
 // void	Server::send_data(Request in) //  can be done if request exists (sening msg to either channel or user or all)
@@ -69,8 +60,8 @@ void	Server::communicate(int i)
 			else
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
 			close (this->_connection_fds[i].fd);
-			this->_connection_fds[i].revents = 0;
-			this->_connection_fds[i].fd = -1; // right now just extanding and not reducing fds - needs to be fixed with vector
+			this->_connection_fds.push_back(init_pollfd());
+			this->_amnt_connections--;
 			return ;
 		}
 		str = str + buff;
@@ -95,17 +86,10 @@ void	Server::accept_connection() //accept connections to socket
 		std::cout << "Accept failed" << std::endl;
 	else
 	{
-		if (this->_size_pollfd_struct < MAX_CONNECTIONS)
-		{
-			this->_connection_fds[this->_size_pollfd_struct].fd = tmp;
-			this->_size_pollfd_struct++;
-			// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
-		}
-		else
-		{
-			std::cout << "The maximum amount of connections is reached" << std::endl;
-			return ;
-		}
+		this->_connection_fds.push_back(init_pollfd());
+		this->_connection_fds[this->_amnt_connections].fd = tmp;
+		this->_amnt_connections++;
+		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
 	}
 }
 
@@ -122,18 +106,13 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 	this->_connection_fds[0].fd = this->_sockfd;
 	this->_connection_fds[0].events = 0;
 	this->_connection_fds[0].events = POLLIN;
-	this->_connection_fds[0].revents = 0;
+	this->_amnt_connections = 1;
 	while (Server::_signal_status == false)
 	{
-		err = poll(this->_connection_fds, this->_size_pollfd_struct, -1);
-		if (err == -1)
+		err = poll(&this->_connection_fds[0], this->_amnt_connections, -1);
+		if (err <= -1)
 			throw ClientConnectionFailed();
-		else if (err == 0)
-		{
-			std::cout << "timeout" << std::endl; 
-			throw ClientConnectionFailed();
-		}
-		for (int i = 0; i < this->_size_pollfd_struct; i++)
+		for (int i = 0; i < this->_amnt_connections; i++)
 		{
 			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
 			{
@@ -150,9 +129,8 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 				{
 					if (recv(this->_connection_fds[i].fd, test, sizeof(test), 0) == 0)
 					{
-						close (this->_connection_fds[i].fd); //this way the array is not adapted - the size stays the same(has to be changed when using vector)
-						this->_connection_fds[i].revents = 0;
-						this->_connection_fds[i].fd = -1;
+						close (this->_connection_fds[i].fd);
+						this->_connection_fds.erase(_connection_fds.begin() + i);
 					}
 				}
 			}
@@ -184,7 +162,7 @@ void	Server::start()
 			continue ;
 		else
 		{
-			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) // option to allow reusage of the same port without waiting incl keeping up connections
+			if (setsockopt(test, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1) //option to allow reusage of the same port without waiting incl keeping up connections
 			{
 				close_and_free_socket("setting up socket didn't work properly");
 				throw ServerConnectionFailed();
@@ -209,13 +187,10 @@ void	Server::start()
 	}
 	try
 	{
-		this->_connection_fds[0].fd = this->_sockfd;
-		this->_size_pollfd_struct = 1;
 		this->listentosocket();
 	}
 	catch(const std::exception &e)
 	{
-		close_connections();
 		close_and_free_socket(std::string());
 		throw e ;
 	}
@@ -257,16 +232,12 @@ void	Server::signal_handler(int signal)
 
 void	Server::close_and_free_socket(std::string err_msg)
 {
-	if (err_msg.empty())
+	int i = 0;
+
+	while ((i < this->_amnt_connections) && (this->_connection_fds[i].fd != -1) && (this->_connection_fds[i].fd != this->_sockfd))
+		close (this->_connection_fds[i++].fd);
+	if (!err_msg.empty())
 		std::cout << err_msg << std::endl;
 	freeaddrinfo(this->_server_info);
 	close(this->_sockfd);
-}
-
-void	Server::close_connections()
-{
-	int	i = 1;
-
-	while (i < this->_size_pollfd_struct && this->_connection_fds[i].fd != -1)
-		close (this->_connection_fds[i++].fd);
 }

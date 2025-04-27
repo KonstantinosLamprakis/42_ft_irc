@@ -38,10 +38,10 @@ int main (int ac, char **argv)
 		validateInput(ac, argv);
 		Server	irc_server(std::stoi(argv[1]), argv[2]);
 		irc_server.start();
-		irc_server.close_connections();
 		irc_server.close_and_free_socket(std::string());
 	}
 	catch(const std::exception& e){
+		std::cout << e.what() << std::endl;
 		return (1);
 	}
 	return (0);
