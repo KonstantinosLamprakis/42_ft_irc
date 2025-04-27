@@ -83,8 +83,10 @@ void	Server::accept_connection() //accept connections to socket
 {
 	int				tmp = 0; //temporary storage of the fd for the new connection
 	sockaddr		comm_socket; //input for accept; saves the communication socket for the connection requested
+	socklen_t		addrlen;
 
-	tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket));
+	addrlen = sizeof(comm_socket);
+	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
 	if (tmp < 0)
 		std::cout << "Accept failed" << std::endl;
 	else
@@ -119,7 +121,7 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 	this->_connection_fds[0].revents = 0;
 	while (Server::_signal_status == false)
 	{
-		err = poll(&this->_connection_fds[0], this->_size_pollfd_struct, -1);
+		err = poll(this->_connection_fds, this->_size_pollfd_struct, -1);
 		if (err == -1)
 			throw ClientConnectionFailed();
 		else if (err == 0)
