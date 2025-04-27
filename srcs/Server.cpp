@@ -50,17 +50,13 @@ Server::Server(int port, std::string password){
 
 /**
  * @brief receives, reads and if necessary forwards message or executes command
- * 
- * @param buff temporary storage to recv data 
- * @param bytes_recvd return value of recv - amount of char read
- * @param str whole string - not yet sure whether necessary
- * @return "new fd_connections struct array which is added to the _onnection_fds in server"
+ * @param i iterator refering to pollfd
  */
 
 void	Server::communicate(int i)
 {
-	char		buff[BUFFER_SIZE];
-	int			bytes_recvd = BUFFER_SIZE;
+	char		buff[BUFFER_SIZE]; //buffer to receive data
+	int			bytes_recvd = BUFFER_SIZE; //to store return value of recv
 	std::string	str = "";
 
 	while (bytes_recvd == BUFFER_SIZE)
@@ -83,18 +79,10 @@ void	Server::communicate(int i)
 	// execute_command; -> e.g. send_data(in);
 }
 
-/**
- * @brief accept connections to socket
- * 
- * @param tmp temporary storage of the fd for the new connection
- * @param comm_socket input for accept; saves the communication socket for the connection requested
- * @return "new fd_connections struct array which is added to the _onnection_fds in server"
- */
-
-void	Server::accept_connection()
+void	Server::accept_connection() //accept connections to socket
 {
-	int				tmp = 0;
-	sockaddr		comm_socket;
+	int				tmp = 0; //temporary storage of the fd for the new connection
+	sockaddr		comm_socket; //input for accept; saves the communication socket for the connection requested
 
 	tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket));
 	if (tmp < 0)
@@ -115,17 +103,9 @@ void	Server::accept_connection()
 	}
 }
 
-/**
- * @brief listens to the open socket of the server for incoming clients and requests
- * 
- * @param i iterator
- * @param err return value used for error handling
- * @return "running connection listening on _sockfd and adding client connections to connection_fds"
- */
-
-void	Server::listentosocket() //not directly throw error - server should keep running
+void	Server::listentosocket() //listens to the open socket of the server for incoming clients and requests
 {
-	int		err = 0;
+	int		err = 0; //return value used for error handling
 	char	test[1024]; //std::string possible?
 
 	if (listen(this->_sockfd, BACKLOG) != 0)
@@ -174,24 +154,12 @@ void	Server::listentosocket() //not directly throw error - server should keep ru
 	}
 }
 
-/**
- * @brief starts server and initializes ports
- * 
- * @param _sockfd fd of the connection bind to port
- * @param _server_info input for getaddrinfo function - will contain "socket address structure"
- * @param server_hints input for getaddrinfo function - contains flags used to define server_info
- * @param tmp struct to check all generated versions in linked list which one is working
- * @param test all solutions in the linked list get tested - if one of them works we continue to try bind
- * @param yes value to set flag in setsockopt function (refered to as address) - probably not necessary and &1 would be enough
- * @return "running connection"
- */
-
 void	Server::start()
 {
-	struct	addrinfo	server_hints;
-	struct	addrinfo*	tmp;
-	int					test = 0;
-	int					yes = 1;
+	struct	addrinfo	server_hints; //input for getaddrinfo function - contains flags used to define server_inf
+	struct	addrinfo*	tmp; //struct to check all generated versions in linked list which one is working
+	int					test = 0; //all solutions in the linked list get tested - if one of them works we continue to try bind
+	int					yes = 1; //value to set flag in setsockopt function (refered to as address) - probably not necessary and &1 would be enough
 
 	memset(&server_hints, 0, sizeof(server_hints));
 	server_hints.ai_family = AF_INET; //only IPv4 (later on we're only allowed to use functions for IPv4)
