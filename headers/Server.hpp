@@ -22,7 +22,6 @@
 # include "User.hpp"
 
 const std::string SPACE = "\t\n ";
-const std::string CRLF = "\r\n";
 
 namespace Command {
 	const std::string PASS = "PASS";
