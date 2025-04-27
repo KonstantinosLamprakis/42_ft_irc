@@ -5,19 +5,23 @@ SRCS_FOLDER = srcs
 OBJECTSDIR = objects
 HEADERS_FOLDER = headers
 
-FLAGS = -Wall -Wextra -Werror
-CPP_STANDARD = -std=c++98
+FLAGS = -Wall -Wextra -Werror -g
+CPP_STANDARD = -std=c++17
 
 SRC_FILES = Server.cpp \
 Request.cpp \
+Exceptions.cpp \
+Helper.cpp \
 # User.cpp \
-# Channel.cpp \
+Channel.cpp
 
 
 HEADERS_FILES = $(HEADERS_FOLDER)/User.hpp \
 $(HEADERS_FOLDER)/Server.hpp \
 $(HEADERS_FOLDER)/Channel.hpp \
 $(HEADERS_FOLDER)/Request.hpp \
+$(HEADERS_FOLDER)/Exceptions.hpp \
+$(HEADERS_FOLDER)/Helper.hpp
 
 MAIN = main.cpp
 
