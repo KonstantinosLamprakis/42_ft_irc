@@ -66,16 +66,22 @@ void	Server::communicate(int i)
 		}
 		str = str + buff;
 	}
-	// Request in = parse(str);
-	// execute_command; -> e.g. send_data(in);
+	try{
+		Request in = parse(str);
+		execute(in);
+	}catch(const std::exception &e){
+		std::cout << "Error: " << e.what() << std::endl;
+	}
 }
 
 void	Server::accept_connection() //accept connections to socket
 {
-	int			tmp = 0; //temporary storage of the fd for the new connection
-	sockaddr	comm_socket; //input for accept; saves the communication socket for the connection requested
+	int				tmp = 0; //temporary storage of the fd for the new connection
+	sockaddr		comm_socket; //input for accept; saves the communication socket for the connection requested
+	socklen_t		addrlen;
 
-	tmp = accept(this->_sockfd, &comm_socket, (unsigned int *)sizeof(comm_socket));
+	addrlen = sizeof(comm_socket);
+	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
 	if (tmp < 0)
 		std::cout << "Accept failed" << std::endl;
 	else
@@ -195,8 +201,6 @@ Request Server::parse(std::string input) const {
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
 		throw std::invalid_argument("Input cannot start with a space.");
-	} else if (input.size() >= 2 && input.substr(input.size() - 2) != CRLF) {
-		throw std::invalid_argument("Input should end with \r\n characters.");
 	}
 
 	std::string command;
