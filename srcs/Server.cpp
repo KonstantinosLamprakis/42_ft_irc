@@ -46,14 +46,15 @@ Server::Server(int port, std::string password){
 
 void	Server::communicate(int i)
 {
-	char		buff[BUFFER_SIZE]; //buffer to receive data
+	char		buff[BUFFER_SIZE + 1]; //buffer to receive data
 	int			bytes_recvd = BUFFER_SIZE; //to store return value of recv
 	std::string	str = "";
 
+	memset(&buff, 0, sizeof(buff));
 	while (bytes_recvd == BUFFER_SIZE)
 	{
-		bytes_recvd = recv(this->_connection_fds[i].fd, buff, sizeof(buff), 0);
-		if (bytes_recvd <= 0)
+		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
+		if (bytes_recvd < 0 || (bytes_recvd == 0 && str == ""))
 		{
 			if (bytes_recvd < 0)
 				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
@@ -64,9 +65,13 @@ void	Server::communicate(int i)
 			this->_amnt_connections--;
 			return ;
 		}
+		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-	try{
+
+	try {
+		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
+		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
 		execute(in);
 	}catch(const std::exception &e){
@@ -197,7 +202,8 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	if (input.empty()) {
+	std::cout << "parsing: -" << input << "-" << std::endl;
+	if (input.empty()) { // just to avoid segfault, this should be handled already
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
 		throw std::invalid_argument("Input cannot start with a space.");
@@ -206,22 +212,38 @@ Request Server::parse(std::string input) const {
 	std::string command;
 	std::vector<std::string> args;
 	std::istringstream stream(input);
-	std::string word;
+    std::string word;
 
-	if (stream >> command) {
-		args.push_back(command);
-		while (stream >> word) {
-			args.push_back(word);
-		}
-	}
+    if (stream >> command) {
+        while (stream >> word) {
+            if (word[0] == ':') {
+				std::string remaining_stream;
+				std::getline(stream, remaining_stream);
+				std::string remaining_word = "";
+				if (word.size() > 1) remaining_word = word.substr(1);
+				args.push_back(remaining_word + remaining_stream);
+				break;
+            }
+            args.push_back(word);
+        }
+    }
+
 	return Request(command, args);
 }
 
 void Server::execute(Request request){
-	if (request.getCommand() == Command::PASS) // TODO(KL)
-		std::cout << "PASS" << std::endl;
-	else
-		throw std::invalid_argument("Invalid command.");
+	std::cout << "execute " << request.getCommand() << std::endl;
+
+	// std::cout << "Command: " << request.getCommand() << std::endl;
+	// for (size_t i = 0; i < request.getArgs().size(); ++i)
+	// {
+	// 	std::cout << "Arg " << i << ": " << request.getArgs()[i] << std::endl;
+	// }
+
+	// if (request.getCommand() == Command::PASS) // TODO(KL)
+	// 	std::cout << "PASS" << std::endl;
+	// else
+	// 	throw std::invalid_argument("Invalid command.");
 }
 
 void	Server::signal_handler(int signal)
