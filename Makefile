@@ -6,6 +6,7 @@ OBJECTSDIR = objects
 HEADERS_FOLDER = headers
 
 FLAGS = -Wall -Wextra -Werror -g
+DEBUG = -fsanitize=address -static-libsan
 CPP_STANDARD = -std=c++17
 
 SRC_FILES = Server.cpp \
@@ -29,6 +30,9 @@ OBJS := $(addprefix $(OBJECTSDIR)/, $(SRC_FILES:.cpp=.o))
 MAIN_OBJ = $(addprefix $(OBJECTSDIR)/, $(MAIN:.cpp=.o))
 
 all: $(NAME)
+
+debug: $(OBJS) $(MAIN_OBJ) $(HEADERS_FILES)
+	@c++ $(CPP_STANDARD) $(OBJECTSDIR)/main.o $(OBJS) $(DEBUG) -o $@ -g
 
 $(NAME): $(OBJS) $(MAIN_OBJ) $(HEADERS_FILES)
 	@c++ $(CPP_STANDARD) $(OBJECTSDIR)/main.o $(OBJS) -o $@ -g
