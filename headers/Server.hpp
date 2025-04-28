@@ -3,7 +3,7 @@
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 511 // max string length - 1
+# define BUFFER_SIZE 512 // max string length - 1
 # include <string>
 # include <cstring>
 # include <iostream>
