@@ -48,23 +48,45 @@ void	Server::communicate(int i)
 {
 	char		buff[BUFFER_SIZE]; //buffer to receive data
 	int			bytes_recvd = BUFFER_SIZE; //to store return value of recv
+	int			count = false; // to make sure no fd is closed after already started receiving a message from it
 	std::string	str = "";
 
 	while (bytes_recvd == BUFFER_SIZE)
 	{
 		bytes_recvd = recv(this->_connection_fds[i].fd, buff, sizeof(buff), 0);
-		if (bytes_recvd <= 0)
+		if (bytes_recvd != 0 && count == false)
+		count = true;
+		if ((bytes_recvd == 0 && count == false) || bytes_recvd < 0)
 		{
 			if (bytes_recvd < 0)
-				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
 			else
+			{
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
-			close (this->_connection_fds[i].fd);
-			this->_connection_fds.push_back(init_pollfd());
-			this->_amnt_connections--;
+				close (this->_connection_fds[i].fd);
+				this->_connection_fds.erase(_connection_fds.begin() + i);
+				this->_amnt_connections--;
+			}
 			return ;
 		}
 		str = str + buff;
+		std::cout << "test: " << str << std::endl;
+	}
+	int	message_length = sizeof(str);
+	int	data_sent = 0;
+	for (int i = 1; i < this->_amnt_connections; i++)
+	{
+		std::cout << "was" << this->_connection_fds[i].fd << std::endl;
+		data_sent = 0;
+		while (data_sent < message_length)
+		{
+			data_sent += send(this->_connection_fds[i].fd, &str[data_sent], (message_length - data_sent), 0);
+			if (data_sent < 0)
+			{
+				std::cout << "sending message to connection fd " << this->_connection_fds[i].fd << " failed" << std::endl;
+				continue ;
+			}
+	}
 	}
 	try{
 		Request in = parse(str);
@@ -88,6 +110,7 @@ void	Server::accept_connection() //accept connections to socket
 	{
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = tmp;
+		std::cout << "new fd: " << tmp << std::endl;
 		this->_amnt_connections++;
 		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
 	}
@@ -117,9 +140,15 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
 			{
 				if (this->_connection_fds[i].fd == this->_sockfd)
+				{
+					std::cout << "new connection: " << std::endl;
 					this->accept_connection();
+				}
 				else
+				{
+					std::cout << "new request" << std::endl;
 					this->communicate(i);
+				}
 			}
 			if (this->_connection_fds[i].revents & POLLHUP)
 			{
@@ -185,8 +214,7 @@ void	Server::start()
 		close_and_free_socket(std::string());
 		throw ServerConnectionFailed();
 	}
-	try
-	{
+	try {
 		this->listentosocket();
 	}
 	catch(const std::exception &e)
@@ -234,8 +262,7 @@ void	Server::close_and_free_socket(std::string err_msg)
 {
 	int i = 0;
 
-	while ((i < this->_amnt_connections) && (this->_connection_fds[i].fd != -1) && (this->_connection_fds[i].fd != this->_sockfd))
-		close (this->_connection_fds[i++].fd);
+	close (this->_connection_fds[i++].fd);
 	if (!err_msg.empty())
 		std::cout << err_msg << std::endl;
 	freeaddrinfo(this->_server_info);

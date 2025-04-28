@@ -12,6 +12,7 @@ class User{
 		std::string	_nickname;
 
 		int	_fd;
+		// int	_status_usr_creation;
 		//char[]					_user_modes;
 		//std::vector<Channel>		_channels;
 

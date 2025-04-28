@@ -3,7 +3,7 @@
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 254 // shouldnt matter for socket stream - right now implemented a while loop (not sure whether this is necessary )
+# define BUFFER_SIZE 512 // rfc 2812
 # include <string>
 # include <cstring>
 # include <iostream>
