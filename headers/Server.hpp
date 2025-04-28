@@ -3,7 +3,7 @@
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 254 // shouldnt matter for socket stream - right now implemented a while loop (not sure whether this is necessary )
+# define BUFFER_SIZE 511 // max string length - 1
 # include <string>
 # include <cstring>
 # include <iostream>
@@ -41,6 +41,7 @@ class Server
 		int							_amnt_connections;
 		static bool					_signal_status;
 		std::vector<User>			_members;
+		std::vector<std::string>	_avlb_commands;
 
 		public:
 		Server();

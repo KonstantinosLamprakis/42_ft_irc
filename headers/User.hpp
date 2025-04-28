@@ -13,9 +13,10 @@ class User{
 
 		int						_fd;
 		int						_status_usr_creation;
-		std::vector<char>		_avlb_user_modes;
+		std::vector<char>		_avlb_user_modes; // seems like we only need the one for operator mode
 		std::vector<char>		_user_modes;
-		std::vector<Channel>	_channels;
+		// std::vector<Channel>	_channels;
+		bool					_password_entered;
 
 	public:
 		User();
@@ -27,7 +28,7 @@ class User{
 
 #endif
 
-//all available modes - reduce in Server Contructor if not needed
+//all available User modes - reduce in Server Contructor if not needed
 // a - user is flagged as away;
 // i - marks a users as invisible;
 // w - user receives wallops;

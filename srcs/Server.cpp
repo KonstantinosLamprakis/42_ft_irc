@@ -25,7 +25,7 @@ Server::Server()
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
-
+	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
 Server::Server(int port, std::string password){
@@ -35,6 +35,7 @@ Server::Server(int port, std::string password){
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
 /**

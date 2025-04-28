@@ -13,8 +13,8 @@ SRC_FILES = Server.cpp \
 Request.cpp \
 Exceptions.cpp \
 Helper.cpp \
-# User.cpp \
-Channel.cpp
+User.cpp \
+# Channel.cpp
 
 
 HEADERS_FILES = $(HEADERS_FOLDER)/User.hpp \
