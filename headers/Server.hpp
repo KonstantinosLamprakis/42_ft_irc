@@ -56,7 +56,7 @@ class Server
 		void		communicate(int i);
 		static void	signal_handler(int signal);
 		pollfd		init_pollfd();
-		//void		send_data(Request in);
+		void		send_data(int n, std::string str);
 		//void		add_member();
 };
 
