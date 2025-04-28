@@ -1,6 +1,8 @@
 #include "../headers/Server.hpp"
 #include "../headers/Exceptions.hpp"
 #include "../headers/Helper.hpp"
+#include "../headers/User.hpp"
+
 
 bool Server::_signal_status = false;
 
@@ -23,6 +25,7 @@ Server::Server()
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+
 }
 
 Server::Server(int port, std::string password){
@@ -34,14 +37,20 @@ Server::Server(int port, std::string password){
 	this->_amnt_connections = 0;
 }
 
+/**
+ * @brief sends data to all other connected users
+ * @param n iterator refering to pollfd 
+ * @param str message to be send
+ * 
+ */
+
 void	Server::send_data(int n, std::string str) //  can be done if request exists (sening msg to either channel or user or all)
 {
 	int	message_length = sizeof(str);
-	for (int i = 1; i < this->_amnt_connections; i++)
+	for (int i = 1; i < this->_amnt_connections; i++) // for everyone but host ...
 	{
-		// std::cout << "was" << this->_connection_fds[i].fd << std::endl;
 		int data_sent = 0;
-		while ((data_sent < message_length) && (n != i))
+		while ((data_sent < message_length) && (n != i)) // .. and sender 
 		{
 			data_sent += send(this->_connection_fds[i].fd, &str[data_sent], (message_length - data_sent), 0);
 			if (data_sent < 0)
@@ -93,12 +102,11 @@ void	Server::communicate(int i)
 	}
 }
 
-
 void	Server::accept_connection() //accept connections to socket
 {
-	int				tmp = 0; //temporary storage of the fd for the new connection
-	sockaddr		comm_socket; //input for accept; saves the communication socket for the connection requested
-	socklen_t		addrlen;
+	int			tmp = 0; //temporary storage of the fd for the new connection
+	sockaddr	comm_socket; //input for accept; saves the communication socket for the connection requested
+	socklen_t	addrlen;
 
 	addrlen = sizeof(comm_socket);
 	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
@@ -109,6 +117,7 @@ void	Server::accept_connection() //accept connections to socket
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = tmp;
 		this->_amnt_connections++;
+		this->_members.push_back(User(tmp));
 		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
 	}
 }

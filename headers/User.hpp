@@ -7,20 +7,31 @@
 
 class User{
 	private:
-		std::string _username;
-		std::string	_fullname;
-		std::string	_nickname;
+		std::string 			_username;
+		std::string				_fullname;
+		std::string				_nickname;
 
-		int	_fd;
-		//char[]					_user_modes;
-		//std::vector<Channel>		_channels;
+		int						_fd;
+		int						_status_usr_creation;
+		std::vector<char>		_avlb_user_modes;
+		std::vector<char>		_user_modes;
+		std::vector<Channel>	_channels;
 
 	public:
 		User();
 		User(int fd);
-		User(User &copy);
-		User& operator=(User &old);
-		~User();
+		void	add_mode(char c);
+		void	remove_mode(char c);
+
 };
 
 #endif
+
+//all available modes - reduce in Server Contructor if not needed
+// a - user is flagged as away;
+// i - marks a users as invisible;
+// w - user receives wallops;
+// r - restricted user connection;
+// o - operator flag;
+// O - local operator flag;
+// s - marks a user for receipt of server notices.

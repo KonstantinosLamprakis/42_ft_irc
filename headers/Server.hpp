@@ -37,11 +37,10 @@ class Server
 		std::string 				_password;
 		int							_sockfd;
 		struct	addrinfo*			_server_info;
-		// struct	pollfd			_connection_fds[MAX_CONNECTIONS];
 		std::vector<struct pollfd>	_connection_fds;
 		int							_amnt_connections;
 		static bool					_signal_status;
-		// std::vector<User>		_members;
+		std::vector<User>			_members;
 
 		public:
 		Server();
