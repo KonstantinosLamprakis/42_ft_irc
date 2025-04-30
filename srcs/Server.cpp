@@ -66,11 +66,11 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
  * @brief print the message msg to the user with spesific fd
  * 
  * @param msg 
- * @param user_fd 
+ * @param user_index 
  */
-void	Server::print_msg_to_user(std::string msg, int user_fd){
-	if (send(this->_connection_fds[user_fd].fd, msg.c_str(), msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << user_fd << ": " << strerror(errno) << std::endl;
+void	Server::print_msg_to_user(std::string msg, int user_index){
+	if (send(this->_connection_fds[user_index].fd, msg.c_str(), msg.length(), 0) == -1)
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
 /**
@@ -102,33 +102,32 @@ void	Server::communicate(int i)
 		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-	send_data(i, str);
 	try {
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
 		execute(in, i);
 	}catch(const std::exception &e){
-		std::cout << "Error: " << e.what() << std::endl;
+		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
 	}
 }
 
-void	Server::accept_connection() //accept connections to socket
+void	Server::accept_connection()
 {
-	int			tmp = 0; //temporary storage of the fd for the new connection
+	int			new_connection_fd = 0; 
 	sockaddr	comm_socket; //input for accept; saves the communication socket for the connection requested
 	socklen_t	addrlen;
 
 	addrlen = sizeof(comm_socket);
-	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
-	if (tmp < 0)
+	new_connection_fd = accept(this->_sockfd, &comm_socket, &addrlen);
+	if (new_connection_fd < 0)
 		std::cout << "Accept failed" << std::endl;
 	else
 	{
 		this->_connection_fds.push_back(init_pollfd());
-		this->_connection_fds[this->_amnt_connections].fd = tmp;
+		this->_connection_fds[this->_amnt_connections].fd = new_connection_fd;
 		this->_amnt_connections++;
-		this->_users.push_back(User(tmp));
+		this->_users.push_back(User(new_connection_fd));
 	}
 }
 
@@ -264,11 +263,11 @@ Request Server::parse(std::string input) const {
 	return Request(command, args);
 }
 
-void Server::execute(Request request, int fd){
+void Server::execute(Request request, int user_index){
 	std::string upperCaseCommand = request.getCommand();
 	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
 	if (upperCaseCommand == Command::PASS) 
-		this->pass(request, fd);
+		this->pass(request, user_index);
 	else if (upperCaseCommand == Command::NICK)
 		std::cout << "TODO NICK" << std::endl;
 	else if (upperCaseCommand == Command::USER)

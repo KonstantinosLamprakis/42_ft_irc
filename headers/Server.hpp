@@ -58,7 +58,7 @@ class Server
 
 		void		start();
 		Request 	parse(std::string input) const;
-		void		execute(Request request, int fd);
+		void		execute(Request request, int user_index);
 		void		listentosocket();
 		void		close_and_free_socket(std::string err_msg);
 		void		accept_connection();
@@ -66,11 +66,11 @@ class Server
 		static void	signal_handler(int signal);
 		pollfd		init_pollfd();
 		void		send_data(int n, std::string str);
-		void		print_msg_to_user(std::string msg, int fd);
+		void		print_msg_to_user(std::string msg, int user_index);
 		// TODO(KL) create also a func: print_msg_to_channel
 
 		// commands
-		void		pass(Request request, int fd);
+		void		pass(Request request, int user_index);
 };
 
 #endif

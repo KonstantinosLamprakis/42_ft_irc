@@ -14,7 +14,7 @@ Request.cpp \
 Exceptions.cpp \
 Helper.cpp \
 User.cpp \
-CmdPass.cpp \
+commands.cpp \
 # Channel.cpp
 
 
