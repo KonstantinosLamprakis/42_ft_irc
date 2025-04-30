@@ -3,7 +3,7 @@
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 254 // shouldnt matter for socket stream - right now implemented a while loop (not sure whether this is necessary )
+# define BUFFER_SIZE 512 // max string length - 1
 # include <string>
 # include <cstring>
 # include <iostream>
@@ -37,11 +37,11 @@ class Server
 		std::string 				_password;
 		int							_sockfd;
 		struct	addrinfo*			_server_info;
-		// struct	pollfd			_connection_fds[MAX_CONNECTIONS];
 		std::vector<struct pollfd>	_connection_fds;
 		int							_amnt_connections;
 		static bool					_signal_status;
-		// std::vector<User>		_members;
+		std::vector<User>			_members;
+		std::vector<std::string>	_avlb_commands;
 
 		public:
 		Server();
@@ -56,7 +56,7 @@ class Server
 		void		communicate(int i);
 		static void	signal_handler(int signal);
 		pollfd		init_pollfd();
-		//void		send_data(Request in);
+		void		send_data(int n, std::string str);
 		//void		add_member();
 };
 

@@ -1,6 +1,8 @@
 #include "../headers/Server.hpp"
 #include "../headers/Exceptions.hpp"
 #include "../headers/Helper.hpp"
+#include "../headers/User.hpp"
+
 
 bool Server::_signal_status = false;
 
@@ -23,6 +25,7 @@ Server::Server()
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
 Server::Server(int port, std::string password){
@@ -32,12 +35,33 @@ Server::Server(int port, std::string password){
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
-// void	Server::send_data(Request in) //  can be done if request exists (sening msg to either channel or user or all)
-// {
-// 	(void)in;
-// }
+/**
+ * @brief sends data to all other connected users
+ * @param n iterator refering to pollfd 
+ * @param str message to be send
+ * 
+ */
+
+void	Server::send_data(int n, std::string str) //  can be done if request exists (sening msg to either channel or user or all)
+{
+	int	message_length = sizeof(str);
+	for (int i = 1; i < this->_amnt_connections; i++) // for everyone but host ...
+	{
+		int data_sent = 0;
+		while ((data_sent < message_length) && (n != i)) // .. and sender 
+		{
+			data_sent += send(this->_connection_fds[i].fd, &str[data_sent], (message_length - data_sent), 0);
+			if (data_sent < 0)
+			{
+				std::cout << "sending message to connection fd " << this->_connection_fds[i].fd << " failed" << std::endl;
+				continue ;
+			}
+		}
+	}
+}
 
 /**
  * @brief receives, reads and if necessary forwards message or executes command
@@ -61,14 +85,14 @@ void	Server::communicate(int i)
 			else
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
 			close (this->_connection_fds[i].fd);
-			this->_connection_fds.push_back(init_pollfd());
+			this->_connection_fds.erase(_connection_fds.begin() + i);
 			this->_amnt_connections--;
 			return ;
 		}
 		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-
+	send_data(i, str);
 	try {
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 		str.pop_back(); //remove \n at the end
@@ -81,9 +105,9 @@ void	Server::communicate(int i)
 
 void	Server::accept_connection() //accept connections to socket
 {
-	int				tmp = 0; //temporary storage of the fd for the new connection
-	sockaddr		comm_socket; //input for accept; saves the communication socket for the connection requested
-	socklen_t		addrlen;
+	int			tmp = 0; //temporary storage of the fd for the new connection
+	sockaddr	comm_socket; //input for accept; saves the communication socket for the connection requested
+	socklen_t	addrlen;
 
 	addrlen = sizeof(comm_socket);
 	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
@@ -94,6 +118,7 @@ void	Server::accept_connection() //accept connections to socket
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = tmp;
 		this->_amnt_connections++;
+		this->_members.push_back(User(tmp));
 		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
 	}
 }
