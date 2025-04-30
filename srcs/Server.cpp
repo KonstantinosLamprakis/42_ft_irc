@@ -227,7 +227,6 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	std::cout << "parsing: -" << input << "-" << std::endl;
 	if (input.empty()) { // just to avoid segfault, this should be handled already
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
@@ -257,18 +256,33 @@ Request Server::parse(std::string input) const {
 }
 
 void Server::execute(Request request){
-	std::cout << "execute " << request.getCommand() << std::endl;
-
-	// std::cout << "Command: " << request.getCommand() << std::endl;
-	// for (size_t i = 0; i < request.getArgs().size(); ++i)
-	// {
-	// 	std::cout << "Arg " << i << ": " << request.getArgs()[i] << std::endl;
-	// }
-
-	// if (request.getCommand() == Command::PASS) // TODO(KL)
-	// 	std::cout << "PASS" << std::endl;
-	// else
-	// 	throw std::invalid_argument("Invalid command.");
+	std::string upperCaseCommand = request.getCommand();
+	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
+	if (upperCaseCommand == Command::PASS) 
+		std::cout << "TODO PASS" << std::endl;
+	else if (upperCaseCommand == Command::NICK)
+		std::cout << "TODO NICK" << std::endl;
+	else if (upperCaseCommand == Command::USER)
+		std::cout << "TODO USER" << std::endl;
+	else if (upperCaseCommand == Command::JOIN)
+		std::cout << "TODO JOIN" << std::endl;
+	else if (upperCaseCommand == Command::PRIVMSG)
+		std::cout << "TODO PRIVMSG" << std::endl;
+	else if (upperCaseCommand == Command::NOTICE)
+		std::cout << "TODO NOTICE" << std::endl;
+	else if (upperCaseCommand == Command::QUIT)
+		std::cout << "TODO QUIT" << std::endl;
+	// operator's commands
+	else if (upperCaseCommand == Command::KICK)
+		std::cout << "TODO KICK" << std::endl;
+	else if (upperCaseCommand == Command::INVITE)
+		std::cout << "TODO INVITE" << std::endl;
+	else if (upperCaseCommand == Command::TOPIC)
+		std::cout << "TODO TOPIC" << std::endl;
+	else if (upperCaseCommand == Command::MODE)
+		std::cout << "TODO MODE" << std::endl;
+	else
+		throw std::invalid_argument("Invalid command.");
 }
 
 void	Server::signal_handler(int signal)

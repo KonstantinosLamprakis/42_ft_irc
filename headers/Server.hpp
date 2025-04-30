@@ -16,7 +16,8 @@
 # include <poll.h>
 # include <signal.h>
 # include <sstream>
-
+# include <algorithm>
+# include <cctype>
 
 # include "Request.hpp"
 # include "User.hpp"
@@ -27,7 +28,15 @@ namespace Command {
 	const std::string PASS = "PASS";
 	const std::string NICK = "NICK";
 	const std::string USER = "USER";
+	const std::string JOIN = "JOIN";
+	const std::string PRIVMSG = "PRIVMSG";
+	const std::string NOTICE = "NOTICE";
 	const std::string QUIT = "QUIT";
+	// Operator's commands
+	const std::string KICK = "KICK";
+	const std::string INVITE = "INVITE";
+	const std::string TOPIC = "TOPIC";
+	const std::string MODE = "MODE";
 };
 
 class Server
