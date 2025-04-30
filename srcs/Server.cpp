@@ -44,7 +44,6 @@ Server::Server(int port, std::string password){
  * @param str message to be send
  * 
  */
-
 void	Server::send_data(int n, std::string str) //  can be done if request exists (sening msg to either channel or user or all)
 {
 	int	message_length = sizeof(str);
@@ -61,6 +60,17 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
 			}
 		}
 	}
+}
+
+/**
+ * @brief print the message msg to the user with spesific fd
+ * 
+ * @param msg 
+ * @param user_fd 
+ */
+void	Server::print_msg_to_user(std::string msg, int user_fd){
+	if (send(this->_connection_fds[user_fd].fd, msg.c_str(), msg.length(), 0) == -1)
+		std::cout << "send() error for fd: " << user_fd << ": " << strerror(errno) << std::endl;
 }
 
 /**
@@ -97,7 +107,7 @@ void	Server::communicate(int i)
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
-		execute(in);
+		execute(in, i);
 	}catch(const std::exception &e){
 		std::cout << "Error: " << e.what() << std::endl;
 	}
@@ -118,8 +128,7 @@ void	Server::accept_connection() //accept connections to socket
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = tmp;
 		this->_amnt_connections++;
-		this->_members.push_back(User(tmp));
-		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
+		this->_users.push_back(User(tmp));
 	}
 }
 
@@ -255,11 +264,11 @@ Request Server::parse(std::string input) const {
 	return Request(command, args);
 }
 
-void Server::execute(Request request){
+void Server::execute(Request request, int fd){
 	std::string upperCaseCommand = request.getCommand();
 	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
 	if (upperCaseCommand == Command::PASS) 
-		std::cout << "TODO PASS" << std::endl;
+		this->pass(request, fd);
 	else if (upperCaseCommand == Command::NICK)
 		std::cout << "TODO NICK" << std::endl;
 	else if (upperCaseCommand == Command::USER)

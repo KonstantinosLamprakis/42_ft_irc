@@ -9,7 +9,8 @@ User::User()
 	this->_fd = -1;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's'}; // seems like we only need the one for operator mode
-	this->_password_entered = false; // set true if correct password was entered - condition for NICK, etc command
+	this->_is_authenticated = false; 
+	this->_is_registered = false;
 }
 
 User::User(int fd)
@@ -21,7 +22,8 @@ User::User(int fd)
 	this->_fd = fd;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's'}; // seems like we only need the one for operator mode
-	this->_password_entered = false; // set true if correct password was entered - condition for NICK, etc command
+	this->_is_authenticated = false; 
+	this->_is_registered = false;
 }
 
 void	User::add_mode(char c) // can be used in MODE command
@@ -56,3 +58,22 @@ void	User::remove_mode(char c) // can be used in MODE command
 	}
 }
 
+bool	User::is_authenticated() const
+{
+	return (this->_is_authenticated);
+}
+
+bool	User::is_registered() const
+{
+	return (this->_is_registered);
+}
+
+void	User::set_authenticated(bool authenticated)
+{
+	this->_is_authenticated = authenticated;
+}
+
+void	User::set_registered(bool registered)
+{
+	this->_is_registered = registered;
+}
