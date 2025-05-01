@@ -1,8 +1,4 @@
 #include "../headers/Server.hpp"
-#include "../headers/Exceptions.hpp"
-#include "../headers/Helper.hpp"
-#include "../headers/User.hpp"
-
 
 bool Server::_signal_status = false;
 
@@ -84,7 +80,7 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
  */
 void	Server::print_error_to_user(std::string numeric, std::string error_msg, int user_index){
 	std::string target = this->_users[user_index].get_nickname();
-	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " :" + error_msg + "\n";
+	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + error_msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
@@ -284,8 +280,7 @@ Request Server::parse(std::string input) const {
 }
 
 void Server::execute(Request request, int user_index){
-	std::string upperCaseCommand = request.getCommand();
-	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
+	std::string upperCaseCommand = toUppercase(request.getCommand());
 	if (upperCaseCommand == Command::PASS) 
 		this->pass(request, user_index);
 	else if (upperCaseCommand == Command::NICK)

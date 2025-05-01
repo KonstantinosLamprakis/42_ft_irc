@@ -1,5 +1,4 @@
 #include "./headers/Server.hpp"
-#include "./headers/Helper.hpp"
 #include "./headers/Exceptions.hpp"
 #include "./headers/Request.hpp"
 

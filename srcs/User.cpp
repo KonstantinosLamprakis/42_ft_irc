@@ -81,3 +81,7 @@ void	User::set_registered(bool registered)
 std::string User::get_nickname() const{
 	return this->_nickname;
 }
+
+void User::set_nickname(std::string nickname){
+	this->_nickname = nickname;
+}
