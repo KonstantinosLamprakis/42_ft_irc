@@ -4,7 +4,7 @@ User::User()
 {
 	this->_username = "";
 	this->_fullname = "";
-	this->_nickname = "";
+	this->_nickname = "*";
 
 	this->_fd = -1;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
@@ -17,7 +17,7 @@ User::User(int fd)
 {
 	this->_username = "";
 	this->_fullname = "";
-	this->_nickname = "";
+	this->_nickname = "*";
 
 	this->_fd = fd;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
@@ -76,4 +76,8 @@ void	User::set_authenticated(bool authenticated)
 void	User::set_registered(bool registered)
 {
 	this->_is_registered = registered;
+}
+
+std::string User::get_nickname() const{
+	return this->_nickname;
 }

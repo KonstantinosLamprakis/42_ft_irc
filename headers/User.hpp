@@ -27,6 +27,7 @@ class User{
 
 		bool is_authenticated() const;
 		bool is_registered() const;
+		std::string get_nickname() const;
 		void set_authenticated(bool authenticated);
 		void set_registered(bool registered);
 };

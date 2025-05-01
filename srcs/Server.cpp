@@ -22,6 +22,7 @@ Server::Server()
 	this->_port = -1;
 	this->_password = "";
 	this->_connection_fds.push_back(init_pollfd());
+	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
@@ -32,6 +33,7 @@ Server::Server(int port, std::string password){
 	this->_port = port;
 	this->_password = password;
 	this->_connection_fds.push_back(init_pollfd());
+	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
@@ -63,13 +65,27 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
 }
 
 /**
- * @brief print the message msg to the user with spesific fd
+ * @brief prints the message msg to the spesific user
  * 
  * @param msg 
  * @param user_index 
  */
 void	Server::print_msg_to_user(std::string msg, int user_index){
 	if (send(this->_connection_fds[user_index].fd, msg.c_str(), msg.length(), 0) == -1)
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+}
+
+/**
+ * @brief prints error values to a spesific user
+ * 
+ * @param numeric numeric should be of type namespace Error in server
+ * @param error_msg 
+ * @param user_index 
+ */
+void	Server::print_error_to_user(std::string numeric, std::string error_msg, int user_index){
+	std::string target = this->_users[user_index].get_nickname();
+	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " :" + error_msg + "\n";
+	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
@@ -269,9 +285,9 @@ void Server::execute(Request request, int user_index){
 	if (upperCaseCommand == Command::PASS) 
 		this->pass(request, user_index);
 	else if (upperCaseCommand == Command::NICK)
-		std::cout << "TODO NICK" << std::endl;
+		this->nick(request, user_index);
 	else if (upperCaseCommand == Command::USER)
-		std::cout << "TODO USER" << std::endl;
+		this->user(request, user_index);
 	else if (upperCaseCommand == Command::JOIN)
 		std::cout << "TODO JOIN" << std::endl;
 	else if (upperCaseCommand == Command::PRIVMSG)
@@ -279,7 +295,7 @@ void Server::execute(Request request, int user_index){
 	else if (upperCaseCommand == Command::NOTICE)
 		std::cout << "TODO NOTICE" << std::endl;
 	else if (upperCaseCommand == Command::QUIT)
-		std::cout << "TODO QUIT" << std::endl;
+		this->quit(request, user_index);
 	// operator's commands
 	else if (upperCaseCommand == Command::KICK)
 		std::cout << "TODO KICK" << std::endl;
