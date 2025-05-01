@@ -1,8 +1,4 @@
 #include "../headers/Server.hpp"
-#include "../headers/Exceptions.hpp"
-#include "../headers/Helper.hpp"
-#include "../headers/User.hpp"
-
 
 bool Server::_signal_status = false;
 
@@ -84,16 +80,27 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
  */
 void	Server::print_error_to_user(std::string numeric, std::string error_msg, int user_index){
 	std::string target = this->_users[user_index].get_nickname();
-	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " :" + error_msg + "\n";
+	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + error_msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
+void Server::close_connection(int user_index){
+	close (this->_connection_fds[user_index].fd);
+	this->_connection_fds.erase(_connection_fds.begin() + user_index);
+	this->_users.erase(_users.begin() + user_index);
+	this->_amnt_connections--;
+}
 /**
- * @brief receives, reads and if necessary forwards message or executes command
+ * @brief read user input, call the parser and execute the command
+ * 
+ * Edge cases:
+ * - empty input: ignore
+ * - input more than the limit (512) -> error
+ * - input a command that doesn't exist -> error
+ * 
  * @param i iterator refering to pollfd
  */
-
 void	Server::communicate(int i)
 {
 	char		buff[BUFFER_SIZE + 1]; //buffer to receive data
@@ -110,9 +117,7 @@ void	Server::communicate(int i)
 				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
 			else
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
-			close (this->_connection_fds[i].fd);
-			this->_connection_fds.erase(_connection_fds.begin() + i);
-			this->_amnt_connections--;
+			close_connection(i);
 			return ;
 		}
 		buff[bytes_recvd + 1] = '\0';
@@ -120,6 +125,7 @@ void	Server::communicate(int i)
 	}
 	try {
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
+		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
 		execute(in, i);
@@ -251,7 +257,8 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	if (input.empty()) { // just to avoid segfault, this should be handled already
+	// just to avoid segfault, this should never happen and it already handled on caller
+	if (input.empty()) { 
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
 		throw std::invalid_argument("Input cannot start with a space.");
@@ -280,8 +287,7 @@ Request Server::parse(std::string input) const {
 }
 
 void Server::execute(Request request, int user_index){
-	std::string upperCaseCommand = request.getCommand();
-	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
+	std::string upperCaseCommand = toUppercase(request.getCommand());
 	if (upperCaseCommand == Command::PASS) 
 		this->pass(request, user_index);
 	else if (upperCaseCommand == Command::NICK)

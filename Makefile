@@ -12,9 +12,9 @@ CPP_STANDARD = -std=c++17
 SRC_FILES = Server.cpp \
 Request.cpp \
 Exceptions.cpp \
-Helper.cpp \
 User.cpp \
 commands.cpp \
+utils.cpp \
 # Channel.cpp
 
 
@@ -23,7 +23,7 @@ $(HEADERS_FOLDER)/Server.hpp \
 $(HEADERS_FOLDER)/Channel.hpp \
 $(HEADERS_FOLDER)/Request.hpp \
 $(HEADERS_FOLDER)/Exceptions.hpp \
-$(HEADERS_FOLDER)/Helper.hpp
+$(HEADERS_FOLDER)/Utils.hpp
 
 MAIN = main.cpp
 

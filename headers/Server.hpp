@@ -16,14 +16,15 @@
 # include <algorithm>
 # include <cctype>
 
+#include "Exceptions.hpp"
+#include "Utils.hpp"
 # include "Request.hpp"
 # include "User.hpp"
 
 # define BACKLOG 10
-# define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 512 // max string length - 1
+# define MAX_CONNECTIONS 1024 
+# define BUFFER_SIZE 512
 
-const std::string SPACE = "\t\n ";
 const std::string SERVER_NAME = "42_IRC";
 
 namespace Command {
@@ -45,6 +46,10 @@ namespace Error {
 	const std::string ERR_ALREADYREGISTERED = "462";
 	const std::string ERR_NEEDMOREPARAMS = "461";
 	const std::string ERR_PASSWDMISMATCH = "464";
+	const std::string ERR_NICKNAMEINUSE = "433";
+	const std::string ERR_NONICKNAMEGIVEN = "431";
+	const std::string ERR_NOAUTHENTICATION = "998";
+	const std::string ERR_ERRONEUSNICKNAME = "432";
 }
 
 class Server
@@ -70,6 +75,7 @@ class Server
 		void		listentosocket();
 		void		close_and_free_socket(std::string err_msg);
 		void		accept_connection();
+		void		close_connection(int user_index);
 		void		communicate(int i);
 		static void	signal_handler(int signal);
 		pollfd		init_pollfd();
