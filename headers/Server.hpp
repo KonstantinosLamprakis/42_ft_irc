@@ -70,6 +70,7 @@ class Server
 		void		listentosocket();
 		void		close_and_free_socket(std::string err_msg);
 		void		accept_connection();
+		void		close_connection(int user_index);
 		void		communicate(int i);
 		static void	signal_handler(int signal);
 		pollfd		init_pollfd();

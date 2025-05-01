@@ -28,5 +28,6 @@ void Server::user(Request request, int user_id) {
 }
 
 void Server::quit(Request request, int user_id) {
-    this->print_msg_to_user(request.getCommand(), user_id);
+    (void)request;
+	close_connection(user_id);
 }

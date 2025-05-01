@@ -89,6 +89,12 @@ void	Server::print_error_to_user(std::string numeric, std::string error_msg, int
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
+void Server::close_connection(int user_index){
+	close (this->_connection_fds[user_index].fd);
+	this->_connection_fds.erase(_connection_fds.begin() + user_index);
+	this->_users.erase(_users.begin() + user_index);
+	this->_amnt_connections--;
+}
 /**
  * @brief receives, reads and if necessary forwards message or executes command
  * @param i iterator refering to pollfd
@@ -110,9 +116,7 @@ void	Server::communicate(int i)
 				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
 			else
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
-			close (this->_connection_fds[i].fd);
-			this->_connection_fds.erase(_connection_fds.begin() + i);
-			this->_amnt_connections--;
+			close_connection(i);
 			return ;
 		}
 		buff[bytes_recvd + 1] = '\0';
