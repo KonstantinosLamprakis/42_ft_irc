@@ -1,9 +1,6 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# define BACKLOG 10
-# define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
-# define BUFFER_SIZE 512 // max string length - 1
 # include <string>
 # include <cstring>
 # include <iostream>
@@ -22,7 +19,12 @@
 # include "Request.hpp"
 # include "User.hpp"
 
+# define BACKLOG 10
+# define MAX_CONNECTIONS 1024 //max is amount of free ports (65535 - 1024 = 64511) without blocking the reserved ones (< 1024)
+# define BUFFER_SIZE 512 // max string length - 1
+
 const std::string SPACE = "\t\n ";
+const std::string SERVER_NAME = "42_IRC";
 
 namespace Command {
 	const std::string PASS = "PASS";
@@ -38,6 +40,12 @@ namespace Command {
 	const std::string TOPIC = "TOPIC";
 	const std::string MODE = "MODE";
 };
+
+namespace Error {
+	const std::string ERR_ALREADYREGISTERED = "462";
+	const std::string ERR_NEEDMOREPARAMS = "461";
+	const std::string ERR_PASSWDMISMATCH = "464";
+}
 
 class Server
 {
@@ -67,10 +75,14 @@ class Server
 		pollfd		init_pollfd();
 		void		send_data(int n, std::string str);
 		void		print_msg_to_user(std::string msg, int user_index);
+		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		// TODO(KL) create also a func: print_msg_to_channel
 
 		// commands
 		void		pass(Request request, int user_index);
+		void		nick(Request request, int user_index);
+		void		user(Request request, int user_index);
+		void		quit(Request request, int user_index);
 };
 
 #endif
