@@ -16,7 +16,8 @@ class User{
 		std::vector<char>		_avlb_user_modes; // seems like we only need the one for operator mode
 		std::vector<char>		_user_modes;
 		// std::vector<Channel>	_channels;
-		bool					_password_entered;
+		bool					_is_authenticated; // though PASS command
+		bool					_is_registered; // through PASS, NICK and USER commands
 
 	public:
 		User();
@@ -24,6 +25,10 @@ class User{
 		void	add_mode(char c);
 		void	remove_mode(char c);
 
+		bool is_authenticated() const;
+		bool is_registered() const;
+		void set_authenticated(bool authenticated);
+		void set_registered(bool registered);
 };
 
 #endif

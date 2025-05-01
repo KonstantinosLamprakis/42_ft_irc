@@ -44,7 +44,6 @@ Server::Server(int port, std::string password){
  * @param str message to be send
  * 
  */
-
 void	Server::send_data(int n, std::string str) //  can be done if request exists (sening msg to either channel or user or all)
 {
 	int	message_length = sizeof(str);
@@ -61,6 +60,17 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
 			}
 		}
 	}
+}
+
+/**
+ * @brief print the message msg to the user with spesific fd
+ * 
+ * @param msg 
+ * @param user_index 
+ */
+void	Server::print_msg_to_user(std::string msg, int user_index){
+	if (send(this->_connection_fds[user_index].fd, msg.c_str(), msg.length(), 0) == -1)
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
 /**
@@ -92,34 +102,32 @@ void	Server::communicate(int i)
 		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-	send_data(i, str);
 	try {
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
-		execute(in);
+		execute(in, i);
 	}catch(const std::exception &e){
-		std::cout << "Error: " << e.what() << std::endl;
+		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
 	}
 }
 
-void	Server::accept_connection() //accept connections to socket
+void	Server::accept_connection()
 {
-	int			tmp = 0; //temporary storage of the fd for the new connection
+	int			new_connection_fd = 0; 
 	sockaddr	comm_socket; //input for accept; saves the communication socket for the connection requested
 	socklen_t	addrlen;
 
 	addrlen = sizeof(comm_socket);
-	tmp = accept(this->_sockfd, &comm_socket, &addrlen);
-	if (tmp < 0)
+	new_connection_fd = accept(this->_sockfd, &comm_socket, &addrlen);
+	if (new_connection_fd < 0)
 		std::cout << "Accept failed" << std::endl;
 	else
 	{
 		this->_connection_fds.push_back(init_pollfd());
-		this->_connection_fds[this->_amnt_connections].fd = tmp;
+		this->_connection_fds[this->_amnt_connections].fd = new_connection_fd;
 		this->_amnt_connections++;
-		this->_members.push_back(User(tmp));
-		// add_member(); - check all necessary input e.g. PASS and NICK, etc so that User is only allowed if complete
+		this->_users.push_back(User(new_connection_fd));
 	}
 }
 
@@ -227,7 +235,6 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	std::cout << "parsing: -" << input << "-" << std::endl;
 	if (input.empty()) { // just to avoid segfault, this should be handled already
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
@@ -256,19 +263,34 @@ Request Server::parse(std::string input) const {
 	return Request(command, args);
 }
 
-void Server::execute(Request request){
-	std::cout << "execute " << request.getCommand() << std::endl;
-
-	// std::cout << "Command: " << request.getCommand() << std::endl;
-	// for (size_t i = 0; i < request.getArgs().size(); ++i)
-	// {
-	// 	std::cout << "Arg " << i << ": " << request.getArgs()[i] << std::endl;
-	// }
-
-	// if (request.getCommand() == Command::PASS) // TODO(KL)
-	// 	std::cout << "PASS" << std::endl;
-	// else
-	// 	throw std::invalid_argument("Invalid command.");
+void Server::execute(Request request, int user_index){
+	std::string upperCaseCommand = request.getCommand();
+	std::transform(upperCaseCommand.begin(), upperCaseCommand.end(), upperCaseCommand.begin(), ::toupper);
+	if (upperCaseCommand == Command::PASS) 
+		this->pass(request, user_index);
+	else if (upperCaseCommand == Command::NICK)
+		std::cout << "TODO NICK" << std::endl;
+	else if (upperCaseCommand == Command::USER)
+		std::cout << "TODO USER" << std::endl;
+	else if (upperCaseCommand == Command::JOIN)
+		std::cout << "TODO JOIN" << std::endl;
+	else if (upperCaseCommand == Command::PRIVMSG)
+		std::cout << "TODO PRIVMSG" << std::endl;
+	else if (upperCaseCommand == Command::NOTICE)
+		std::cout << "TODO NOTICE" << std::endl;
+	else if (upperCaseCommand == Command::QUIT)
+		std::cout << "TODO QUIT" << std::endl;
+	// operator's commands
+	else if (upperCaseCommand == Command::KICK)
+		std::cout << "TODO KICK" << std::endl;
+	else if (upperCaseCommand == Command::INVITE)
+		std::cout << "TODO INVITE" << std::endl;
+	else if (upperCaseCommand == Command::TOPIC)
+		std::cout << "TODO TOPIC" << std::endl;
+	else if (upperCaseCommand == Command::MODE)
+		std::cout << "TODO MODE" << std::endl;
+	else
+		throw std::invalid_argument("Invalid command.");
 }
 
 void	Server::signal_handler(int signal)

@@ -14,6 +14,7 @@ Request.cpp \
 Exceptions.cpp \
 Helper.cpp \
 User.cpp \
+commands.cpp \
 # Channel.cpp
 
 
