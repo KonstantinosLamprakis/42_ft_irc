@@ -92,10 +92,15 @@ void Server::close_connection(int user_index){
 	this->_amnt_connections--;
 }
 /**
- * @brief receives, reads and if necessary forwards message or executes command
+ * @brief read user input, call the parser and execute the command
+ * 
+ * Edge cases:
+ * - empty input: ignore
+ * - input more than the limit (512) -> error
+ * - input a command that doesn't exist -> error
+ * 
  * @param i iterator refering to pollfd
  */
-
 void	Server::communicate(int i)
 {
 	char		buff[BUFFER_SIZE + 1]; //buffer to receive data
@@ -120,6 +125,7 @@ void	Server::communicate(int i)
 	}
 	try {
 		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
+		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
 		execute(in, i);
@@ -251,7 +257,8 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	if (input.empty()) { // just to avoid segfault, this should be handled already
+	// just to avoid segfault, this should never happen and it already handled on caller
+	if (input.empty()) { 
 		throw std::invalid_argument("Input cannot be empty.");
 	} else if (SPACE.find(input[0]) != std::string::npos) {
 		throw std::invalid_argument("Input cannot start with a space.");

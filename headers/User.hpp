@@ -25,9 +25,16 @@ class User{
 		void	add_mode(char c);
 		void	remove_mode(char c);
 
+		// getters
 		bool is_authenticated() const;
 		bool is_registered() const;
+		std::string get_username() const;
+		std::string get_fullname() const;
 		std::string get_nickname() const;
+
+		// setters
+		void set_username(std::string nickname);
+		void set_fullname(std::string nickname);
 		void set_nickname(std::string nickname);
 		void set_authenticated(bool authenticated);
 		void set_registered(bool registered);

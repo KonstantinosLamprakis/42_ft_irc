@@ -82,6 +82,23 @@ std::string User::get_nickname() const{
 	return this->_nickname;
 }
 
+std::string User::get_username() const{
+	return this->_username;
+}
+
+std::string User::get_fullname() const{
+	return this->_fullname;
+}
+
+
 void User::set_nickname(std::string nickname){
 	this->_nickname = nickname;
+}
+
+void User::set_username(std::string username){
+	this->_username = username;
+}
+
+void User::set_fullname(std::string fullname){
+	this->_fullname = fullname;
 }
