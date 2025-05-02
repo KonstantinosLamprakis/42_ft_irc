@@ -1,4 +1,4 @@
-#include "../headers/Server.hpp"
+#include "../headers/Commands.hpp"
 
 /**
  * @brief PASS command allows the client to authenticate with the server
