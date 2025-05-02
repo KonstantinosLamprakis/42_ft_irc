@@ -128,7 +128,7 @@ void	Server::communicate(int i)
 		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
-		execute(in, i);
+		execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
 	}catch(const std::exception &e){
 		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
 	}
@@ -180,6 +180,7 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 					this->accept_connection();
 				else
 					this->communicate(i);
+				continue ; // it looks like we need to call poll before EVERY time we call accept, send, recv(eval sheet)
 			}
 			if (this->_connection_fds[i].revents & POLLHUP)
 			{

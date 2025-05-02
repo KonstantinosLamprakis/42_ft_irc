@@ -1,19 +1,23 @@
 #ifndef CHANNEL_HPP
 # define CHANNEL_HPP
 
-#include <string>
-#include <vector>
+# include <string>
+# include <vector>
+# include "User.hpp"
+# include "Exceptions.hpp"
+# include "Utils.hpp"
 
 class Channel{
 	private:
-		std::string	_name;
-		std::vector<std::string> _users;
+		std::string			_name;
+		std::string			_channel_type;
+		std::vector<User>	_users;
 
 	public:
-	Channel();
-	Channel(Channel &copy);
-	Channel& operator=(Channel &old);
-	~Channel();
+	Channel(std::string name, User creator);
+
+	int			check_name_valid(std::string name);
+	std::string	choose_type(std::string name);
 };
 
 #endif

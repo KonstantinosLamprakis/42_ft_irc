@@ -15,4 +15,10 @@ class	ClientConnectionFailed : public std::exception
 		const char* what() const throw();
 };
 
+class	ChannelCreationFailed : public std::exception
+{
+	public:
+		const char* what() const throw();
+};
+
 #endif

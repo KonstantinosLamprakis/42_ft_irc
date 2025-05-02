@@ -90,6 +90,13 @@ std::string User::get_fullname() const{
 	return this->_fullname;
 }
 
+int User::search_channel(std::string name) const
+{
+	if (this->_channels.find(name) != _channels.end())
+		return this->_channels.find(name)->second; // returns true or false depending on creator mode or not
+	return (-1); //return -1 if user is not in the channel
+}
+
 
 void User::set_nickname(std::string nickname){
 	this->_nickname = nickname;
@@ -101,4 +108,14 @@ void User::set_username(std::string username){
 
 void User::set_fullname(std::string fullname){
 	this->_fullname = fullname;
+}
+
+void User::add_channel(std::pair<std::string, bool> new_channel)
+{
+	this->_channels.insert({new_channel.first, new_channel.second});
+}
+
+void User::remove_channel(std::string channel)
+{
+	this->_channels.erase(channel);
 }
