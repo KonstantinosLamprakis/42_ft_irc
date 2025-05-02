@@ -23,6 +23,8 @@ Server::Server()
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
 	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
+	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's', '-'}; // seems like we only need the one for operator mode
+	this->_channel_modes_allowed = {'t', 'o'}; //incomplete
 }
 
 Server::Server(int port, std::string password){
@@ -34,6 +36,8 @@ Server::Server(int port, std::string password){
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
 	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
+	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's', '-'}; // seems like we only need the one for operator mode
+	this->_channel_modes_allowed = {'t', 'o'}; //incomplete
 }
 
 /**
@@ -149,7 +153,7 @@ void	Server::accept_connection()
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = new_connection_fd;
 		this->_amnt_connections++;
-		this->_users.push_back(User(new_connection_fd));
+		this->_users.push_back(User(new_connection_fd, &this));
 	}
 }
 
@@ -333,3 +337,4 @@ void	Server::close_and_free_socket(std::string err_msg)
 	freeaddrinfo(this->_server_info);
 	close(this->_sockfd);
 }
+

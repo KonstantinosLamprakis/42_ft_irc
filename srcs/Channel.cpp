@@ -29,10 +29,27 @@ Channel::Channel(std::string name, User creator)
 {
 	if (check_name_valid(name) != 0)
 		throw ChannelCreationFailed();
+	this->_channel_modes;
 	this->_name = name;
-	this->_channel_type = choose_type(name);
+	try
+	{
+		this->_channel_type = choose_type(name);
+	}
+	catch (std::exception &e)
+	{
+		throw e;
+	}
 	this->_users.push_back(creator);
-	creator._channels.insert({name, true});
+	if (_channel_type != "no_channel_modes_allwd")
+	{
+		creator.add_channel({name, {'-'}}); //if a user creates a new channel, its directly added to its "library"
+
+	}
+	else
+		creator.add_channel({name, {'O'}}); //if a user creates a new channel, its directly added to its "library"
+	if (_channel_type != "safe")
+		creator.add_user_mode(name, 'o');
+	this->_topic = "";
 }
 
 int	Channel::check_name_valid(std::string name)

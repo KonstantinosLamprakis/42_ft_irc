@@ -5,27 +5,26 @@
 # include <vector>
 # include <map>
 # include "Channel.hpp"
+# include "Server.hpp"
 
 class User{
 	private:
-		std::string 				_username;
-		std::string					_fullname;
-		std::string					_nickname;
+		std::string 								_username;
+		std::string									_fullname;
+		std::string									_nickname;
 
-		int							_fd;
-		int							_status_usr_creation;
-		std::vector<char>			_avlb_user_modes; // seems like we only need the one for operator mode
-		std::vector<char>			_user_modes;
-		std::map<std::string, bool>	_channels;
+		int											_fd;
+		int											_status_usr_creation;
+		std::map<std::string, std::vector<char>>	_channels;
+		bool										_is_authenticated; // though PASS command
+		bool										_is_registered; // through PASS, NICK and USER commands
+		class Server*								_server;
 
-		bool						_is_authenticated; // though PASS command
-		bool						_is_registered; // through PASS, NICK and USER commands
-
-	public:
-		User();
-		User(int fd);
-		void	add_mode(char c);
-		void	remove_mode(char c);
+		public:
+		User(Server* s);
+		User(int fd, Server* s);
+		void	add_user_mode(std::string channel_name, char c);
+		void	remove_user_mode(std::string channel_name, char c);
 
 		// getters
 		bool		is_authenticated() const;
@@ -41,7 +40,7 @@ class User{
 		void	set_nickname(std::string nickname);
 		void	set_authenticated(bool authenticated);
 		void	set_registered(bool registered);
-		void	add_channel(std::pair<std::string, bool> new_channel);
+		void	add_channel(std::pair<std::string, std::vector<char> > new_channel);
 		void	remove_channel(std::string channel);
 };
 

@@ -1,6 +1,6 @@
 #include "../headers/User.hpp"
 
-User::User()
+User::User(Server* s)
 {
 	this->_username = "";
 	this->_fullname = "";
@@ -8,12 +8,12 @@ User::User()
 
 	this->_fd = -1;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
-	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's'}; // seems like we only need the one for operator mode
 	this->_is_authenticated = false; 
 	this->_is_registered = false;
+	this->_server = s;
 }
 
-User::User(int fd)
+User::User(int fd, Server* s)
 {
 	this->_username = "";
 	this->_fullname = "";
@@ -21,39 +21,49 @@ User::User(int fd)
 
 	this->_fd = fd;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
-	this->_avlb_user_modes = {'a', 'i', 'w', 'r', 'o', 'O', 's'}; // seems like we only need the one for operator mode
 	this->_is_authenticated = false; 
 	this->_is_registered = false;
+	this->_server = s;
 }
 
-void	User::add_mode(char c) // can be used in MODE command
+void	User::add_user_mode(std::string channel_name, char c)
 {
-	for (unsigned long i = 0; i < sizeof(this->_avlb_user_modes); i++)
+	std::map<std::string, std::vector<char>>::iterator	it;
+
+	for (unsigned long i = 0; i < this->_server->_avlb_user_modes.size(); i++)
 	{
-		if (this->_avlb_user_modes[i] == c)
+		if (this->_server->_avlb_user_modes[i] == c)
 		{
-			for (unsigned long n = 0; n < sizeof(this->_user_modes); n++)
+			it = this->_channels.find(channel_name);
+			if (it == this->_channels.end())
+				return ; // if necessary print statement
+			for (unsigned long n = 0; n < sizeof(this->_channels.find(channel_name)->second); n++)
 			{
-				if (this->_user_modes[n] == c)
-					return ; // print message if necessary
-				
+				if (this->_channels.find(channel_name)->second[n] == c)
+					return ; // if necessary print
 			}
-			this->_user_modes.push_back(c);
+			this->_channels.find(channel_name)->second.push_back(c);
 		}
 	}
 }
 
-void	User::remove_mode(char c) // can be used in MODE command
+void	User::remove_user_mode(std::string channel_name, char c)
 {
-	for (unsigned long i = 0; i < sizeof(this->_avlb_user_modes); i++)
+	std::map<std::string, std::vector<char>>::iterator	it;
+
+	for (unsigned long i = 0; i < this->_server->_avlb_user_modes.size(); i++)
 	{
-		if (this->_avlb_user_modes[i] == c)
+		if (this->_server->_avlb_user_modes[i] == c)
 		{
-			for (unsigned long n = 0; n < sizeof(this->_user_modes); n++)
+			it = this->_channels.find(channel_name);
+			if (it == this->_channels.end())
+				return ; // if necessary print statement
+			for (unsigned long n = 0; n < sizeof(this->_channels.find(channel_name)->second); n++)
 			{
-				if (this->_user_modes[n] == c)
-					this->_user_modes.erase(this->_user_modes.begin() + i); //print message if necessary
-			}
+				if (this->_channels.find(channel_name)->second[n] == c)
+					this->_channels.find(channel_name)->second.erase(this->_channels.find(channel_name)->second.begin() + n);
+				}
+			return ; // if necessary print
 		}
 	}
 }
@@ -93,8 +103,8 @@ std::string User::get_fullname() const{
 int User::search_channel(std::string name) const
 {
 	if (this->_channels.find(name) != _channels.end())
-		return this->_channels.find(name)->second; // returns true or false depending on creator mode or not
-	return (-1); //return -1 if user is not in the channel
+		return (0); // returns true or false depending on creator mode or not
+	return (1); //return -1 if user is not in the channel
 }
 
 
@@ -110,9 +120,9 @@ void User::set_fullname(std::string fullname){
 	this->_fullname = fullname;
 }
 
-void User::add_channel(std::pair<std::string, bool> new_channel)
+void User::add_channel(std::pair<std::string, std::vector<char>> new_channel)
 {
-	this->_channels.insert({new_channel.first, new_channel.second});
+	this->_channels.insert(new_channel);
 }
 
 void User::remove_channel(std::string channel)

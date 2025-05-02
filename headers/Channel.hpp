@@ -9,9 +9,11 @@
 
 class Channel{
 	private:
-		std::string			_name;
-		std::string			_channel_type;
-		std::vector<User>	_users;
+		std::string				_name;
+		std::string				_channel_type;
+		std::vector<class User>	_users;
+		std::string				_topic;
+		std::vector<char>		_channel_modes;
 
 	public:
 	Channel(std::string name, User creator);

@@ -64,11 +64,16 @@ class Server
 		static bool					_signal_status;
 		std::vector<User>			_users;
 		std::vector<std::string>	_avlb_commands;
-
-	public:
+		
+		
+		
+		public:
 		Server();
 		Server(int port, std::string password);
-
+	
+		std::vector<char>			_channel_modes_allowed const;
+		std::vector<char>			_avlb_user_modes const; // seems like we only need the one for operator mode
+		
 		void		start();
 		Request 	parse(std::string input) const;
 		void		execute(Request request, int user_index);
@@ -89,6 +94,8 @@ class Server
 		void		nick(Request request, int user_index);
 		void		user(Request request, int user_index);
 		void		quit(Request request, int user_index);
+
+
 };
 
 #endif
