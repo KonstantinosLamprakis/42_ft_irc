@@ -29,7 +29,7 @@ Channel::Channel(std::string name, User creator)
 {
 	if (check_name_valid(name) != 0)
 		throw ChannelCreationFailed();
-	this->_channel_modes;
+	// this->_channel_modes = {};
 	this->_name = name;
 	try
 	{

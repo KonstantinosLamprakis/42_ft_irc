@@ -26,6 +26,8 @@
 # define BUFFER_SIZE 512
 
 const std::string SERVER_NAME = "42_IRC";
+class User;
+class Request;
 
 namespace Command {
 	const std::string PASS = "PASS";
