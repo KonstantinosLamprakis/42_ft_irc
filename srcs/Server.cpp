@@ -13,7 +13,7 @@ pollfd	Server::init_pollfd()
 	return (new_pollfd);
 }
 
-Server::Server() : _channel_modes_allowed({'t', 'o'}), \
+Server::Server() : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
 _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
 {
 	this->_port = -1;
@@ -26,7 +26,7 @@ _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjust
 	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
-Server::Server(int port, std::string password) : _channel_modes_allowed({'t', 'o'}), \
+Server::Server(int port, std::string password) : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
 _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
 {
 	this->_port = port;

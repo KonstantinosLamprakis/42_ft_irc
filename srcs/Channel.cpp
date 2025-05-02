@@ -1,6 +1,6 @@
 #include "../headers/Channel.hpp"
 
-std::string	Channel::choose_type(std::string name)
+std::string	Channel::choose_type(std::string name) //Channels with +, #, & have a limited lifetime; they are deleted after every user left the channel
 {
 	char	c = name[0];
 	std::string type_name;
@@ -16,13 +16,47 @@ std::string	Channel::choose_type(std::string name)
 		type_name = "normal";
 		break;
 	case '!':
-		type_name = "safe";
+		type_name = "safe"; // will stay even if last user left the chat (all other channel types will be deleted)
 		break;
 	default:
 		throw ChannelCreationFailed();
 		break;
 	}
 	return (type_name);
+}
+
+void	Channel::add_channel_mode(char c)
+{
+	for (unsigned long i = 0; i < this->_server->_channel_modes_allowed.size(); i++)
+	{
+		if (this->_server->_channel_modes_allowed[i] == c)
+		{
+			for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+			{
+				if (this->_channel_modes[n] == c)
+					return ;
+			}
+			this->_channel_modes.push_back(c);
+		}
+	}
+}
+
+void	Channel::remove_channel_mode(char c)
+{
+	for (unsigned long i = 0; i < this->_server->_channel_modes_allowed.size(); i++)
+	{
+		if (this->_server->_channel_modes_allowed[i] == c)
+		{
+			for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+			{
+				if (this->_channel_modes[n] == c)
+				{
+					this->_channel_modes.erase(this->_channel_modes.begin() + n);
+					return ;
+				}
+			}
+		}
+	}
 }
 
 Channel::Channel(std::string name, User creator)
@@ -40,15 +74,17 @@ Channel::Channel(std::string name, User creator)
 		throw e;
 	}
 	this->_users.push_back(creator);
-	if (_channel_type != "no_channel_modes_allwd")
+	if (this->_channel_type == "no_channel_modes_allwd")
 	{
-		creator.add_channel({name, {'-'}}); //if a user creates a new channel, its directly added to its "library"
-
+		creator.add_channel({name, {'-'}}); //if a user creates a new channel, its directly added to its "library" for + without operators
+		this->_channel_modes.push_back('t');
 	}
 	else
-		creator.add_channel({name, {'O'}}); //if a user creates a new channel, its directly added to its "library"
+	{
+		creator.add_channel({name, {'o'}}); //if a user creates a new channel, its directly added to its "library" with Operator mode
+		this->_channel_modes.push_back('t'); // here others could be added, for + channel that is not possible
+	}
 	if (_channel_type != "safe")
-		creator.add_user_mode(name, 'o');
 	this->_topic = "";
 }
 

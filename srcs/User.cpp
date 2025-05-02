@@ -2,7 +2,7 @@
 
 User::User(Server* s)
 {
-	this->_username = "";
+	this->_username = ""; // User name anonymous is forbidden
 	this->_fullname = "";
 	this->_nickname = "*";
 
@@ -15,7 +15,7 @@ User::User(Server* s)
 
 User::User(int fd, Server* s)
 {
-	this->_username = "";
+	this->_username = ""; // User name anonymous is forbidden
 	this->_fullname = "";
 	this->_nickname = "*";
 
