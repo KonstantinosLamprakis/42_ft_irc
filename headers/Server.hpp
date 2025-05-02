@@ -66,13 +66,13 @@ class Server
 		std::vector<std::string>	_avlb_commands;
 		
 		
-		
 		public:
 		Server();
 		Server(int port, std::string password);
-	
-		std::vector<char>			_channel_modes_allowed const;
-		std::vector<char>			_avlb_user_modes const; // seems like we only need the one for operator mode
+		
+		const std::vector<char>			_channel_modes_allowed;
+		const std::vector<char>			_avlb_user_modes; // seems like we only need the one for operator mode
+		
 		
 		void		start();
 		Request 	parse(std::string input) const;

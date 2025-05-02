@@ -18,7 +18,7 @@ Server::Server()
 	this->_port = -1;
 	this->_password = "";
 	this->_connection_fds.push_back(init_pollfd());
-	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
+	this->_users.push_back(User(this->_sockfd, this)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
@@ -31,7 +31,7 @@ Server::Server(int port, std::string password){
 	this->_port = port;
 	this->_password = password;
 	this->_connection_fds.push_back(init_pollfd());
-	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
+	this->_users.push_back(User(this->_sockfd, this)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
@@ -153,7 +153,7 @@ void	Server::accept_connection()
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = new_connection_fd;
 		this->_amnt_connections++;
-		this->_users.push_back(User(new_connection_fd, &this));
+		this->_users.push_back(User(new_connection_fd, this));
 	}
 }
 
