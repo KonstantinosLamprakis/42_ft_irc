@@ -24,6 +24,7 @@
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 
 # define BUFFER_SIZE 512
+# define CHANNEL_PER_USER_LIMIT 1
 
 const std::string SERVER_NAME = "42_IRC";
 class User;
@@ -52,6 +53,9 @@ namespace Error {
 	const std::string ERR_NOAUTHENTICATION = "998";
 	const std::string ERR_ERRONEUSNICKNAME = "432";
 	const std::string ERR_UNKNOWNCOMMAND = "421";
+	const std::string ERR_TOOMANYCHANNELS = "405";
+	const std::string ERR_NOSUCHCHANNEL = "403";
+	const std::string ERR_ILLEGALCHANNELNAME = "479";
 }
 
 class Server
@@ -96,8 +100,7 @@ class Server
 		void		nick(Request request, int user_index);
 		void		user(Request request, int user_index);
 		void		quit(Request request, int user_index);
-
-
+		void		join(Request request, int user_index);
 };
 
 #endif

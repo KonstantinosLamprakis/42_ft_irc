@@ -73,7 +73,7 @@ void Server::nick(Request request, int user_id) {
     }
 
     // check for invalid characters: starting with digit, contain space or :, # or &
-    const std::string invalid_chars = ":#&" + SPACE;
+    const std::string invalid_chars = ":#&!+" + SPACE;
     if (nickname.find_first_of(invalid_chars) != std::string::npos || std::isdigit(static_cast<unsigned char>(nickname[0]))){
         this->print_error_to_user(Error::ERR_ERRONEUSNICKNAME, nickname + " :Erroneous Nickname.\n", user_id);
         return;
@@ -139,7 +139,7 @@ void Server::user(Request request, int user_id) {
     const std::string realname = request.getArgs()[3]; // we ignore the 2nd and 3rd args, hostname and servername
     
     // check for invalid characters: starting with digit, contain space or :, # or &
-    const std::string invalid_chars = ":#&" + SPACE;
+    const std::string invalid_chars = ":#&!+" + SPACE;
     if (username.find_first_of(invalid_chars) != std::string::npos || std::isdigit(static_cast<unsigned char>(username[0]))){
         this->print_msg_to_user("Invalid username[~" + username + "].\n", user_id);
         this->close_connection(user_id);
@@ -166,4 +166,85 @@ void Server::user(Request request, int user_id) {
 void Server::quit(Request request, int user_id) {
     (void)request;
 	close_connection(user_id);
+}
+
+/**
+ * @brief used from a client to join a new/existed channel
+ * 
+ * Edge cases:
+ * - user wants to join multiple channels at the same time -> error as our SERVER limit is 1
+ * - user want to join to existed channel 
+ * - user want to join to non-existed channel -> channel created, he bocomes moderator
+ * - user joins a channel using key(password)
+ * 
+ * - JOIN -> error not enough params
+ * - JOIN channel_not_start_# -> error no such channel
+ * - JOIN #channel1,,,, -> no error, just join #channel1
+ * - JOIN #channel_more_than_50_chars -> error illegal channel name
+ * 
+ * - Channels can have many modes (#&!+), we only support # mode
+ *  - we will not support &, ! and + as we don't communicate with other servers, they are optional on IRC and on task description
+ * 
+ * Format: JOIN channels keys or JOIN 0
+ * @param request 
+ * @param user_id 
+ */
+void Server::join(Request request, int user_id) {
+    if (request.getArgs().size() < 1 ) { // if more than 1, server only use the 1rst one
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+        return;
+    }
+    if (request.getArgs()[0] == "0") { // if user wants to leave all the channels channel
+        // TODO(KL) remove user from all channels
+        return;
+    }
+
+    // parsing channels format: channel1,channel2,channel3
+    std::vector<std::string> channels;
+    std::stringstream channels_stream(request.getArgs()[0]);
+    std::string channel;
+    while (std::getline(channels_stream, channel, ',')) {
+        channels.push_back(channel);
+    }
+
+    // verify all channels name starts with # and not invalid chars + length
+    const std::string invalid_chars = "\a," + SPACE;
+    for (size_t i = 0; i < channels.size(); i++) {
+        if (channels[i].size() > 50){
+            this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
+            channels.erase(channels.begin() + i);
+            i--;
+            continue;
+        }
+        if (channels[i].find_first_of(invalid_chars) != std::string::npos){
+            this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
+            channels.erase(channels.begin() + i);
+            i--;
+            continue;
+        }
+        if (channels[i][0] != '#'){
+            this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, channels[i] + " :No such channel.\n", user_id);
+            channels.erase(channels.begin() + i);
+            i--;
+            continue;
+        }
+        if (channels[i].size() == 0){
+            channels.erase(channels.begin() + i);
+            i--;
+            continue;
+        }
+    }
+
+    // parsing keys format: key1,key2
+    std::vector<std::string> keys;
+    if (request.getArgs().size() > 1) {
+        std::stringstream keys_stream(request.getArgs()[1]);
+        std::string key;
+        while (std::getline(keys_stream, key, ',')) {
+            channels.push_back(key);
+        }
+    }
+
+    // TODO(KL) finish this command
+    // check if user reached CHANNEL_PER_USER_LIMIT
 }

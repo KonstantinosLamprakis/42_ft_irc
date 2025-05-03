@@ -288,12 +288,11 @@ void Server::execute(Request request, int user_index){
 	else if (upperCaseCommand == Command::USER)
 		this->user(request, user_index);
 	else if (upperCaseCommand == Command::JOIN)
-		std::cout << "TODO JOIN" << std::endl;
+		this->join(request, user_index);
 	else if (upperCaseCommand == Command::PRIVMSG)
 		std::cout << "TODO PRIVMSG" << std::endl;
 	else if (upperCaseCommand == Command::QUIT)
 		this->quit(request, user_index);
-		
 	// operator's commands
 	else if (upperCaseCommand == Command::KICK)
 		std::cout << "TODO KICK" << std::endl;
