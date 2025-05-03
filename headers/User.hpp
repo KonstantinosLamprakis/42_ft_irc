@@ -18,6 +18,8 @@ class User{
 		std::map<std::string, std::vector<char>>	_channels;
 		bool										_is_authenticated; // though PASS command
 		bool										_is_registered; // through PASS, NICK and USER commands
+		bool										_is_nickname_set;
+		bool										_is_username_set;
 		class Server*								_server;
 
 		public:
@@ -39,7 +41,6 @@ class User{
 		void	set_fullname(std::string nickname);
 		void	set_nickname(std::string nickname);
 		void	set_authenticated(bool authenticated);
-		void	set_registered(bool registered);
 		void	add_channel(std::pair<std::string, std::vector<char> > new_channel);
 		void	remove_channel(std::string channel);
 };

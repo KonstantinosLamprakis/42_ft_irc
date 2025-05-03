@@ -35,7 +35,6 @@ namespace Command {
 	const std::string USER = "USER";
 	const std::string JOIN = "JOIN";
 	const std::string PRIVMSG = "PRIVMSG";
-	const std::string NOTICE = "NOTICE";
 	const std::string QUIT = "QUIT";
 	// Operator's commands
 	const std::string KICK = "KICK";
@@ -52,6 +51,7 @@ namespace Error {
 	const std::string ERR_NONICKNAMEGIVEN = "431";
 	const std::string ERR_NOAUTHENTICATION = "998";
 	const std::string ERR_ERRONEUSNICKNAME = "432";
+	const std::string ERR_UNKNOWNCOMMAND = "421";
 }
 
 class Server

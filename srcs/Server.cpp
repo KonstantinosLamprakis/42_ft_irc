@@ -126,15 +126,11 @@ void	Server::communicate(int i)
 		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-	try {
-		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
-		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
-		str.pop_back(); //remove \n at the end
-		Request in = parse(str);
-		execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
-	}catch(const std::exception &e){
-		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
-	}
+	if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
+	if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
+	str.pop_back(); //remove \n at the end
+	Request in = parse(str);
+	execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
 }
 
 void	Server::accept_connection()
@@ -261,13 +257,6 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	// just to avoid segfault, this should never happen and it already handled on caller
-	if (input.empty()) { 
-		throw std::invalid_argument("Input cannot be empty.");
-	} else if (SPACE.find(input[0]) != std::string::npos) {
-		throw std::invalid_argument("Input cannot start with a space.");
-	}
-
 	std::string command;
 	std::vector<std::string> args;
 	std::istringstream stream(input);
@@ -302,10 +291,9 @@ void Server::execute(Request request, int user_index){
 		std::cout << "TODO JOIN" << std::endl;
 	else if (upperCaseCommand == Command::PRIVMSG)
 		std::cout << "TODO PRIVMSG" << std::endl;
-	else if (upperCaseCommand == Command::NOTICE)
-		std::cout << "TODO NOTICE" << std::endl;
 	else if (upperCaseCommand == Command::QUIT)
 		this->quit(request, user_index);
+		
 	// operator's commands
 	else if (upperCaseCommand == Command::KICK)
 		std::cout << "TODO KICK" << std::endl;
@@ -316,7 +304,7 @@ void Server::execute(Request request, int user_index){
 	else if (upperCaseCommand == Command::MODE)
 		std::cout << "TODO MODE" << std::endl;
 	else
-		throw std::invalid_argument("Invalid command.");
+		this->print_error_to_user(Error::ERR_UNKNOWNCOMMAND, request.getCommand() + " :Unknown command.\n", user_index);
 }
 
 void	Server::signal_handler(int signal)

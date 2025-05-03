@@ -6,6 +6,8 @@ User::User(Server* s)
 	this->_fullname = "";
 	this->_nickname = "*";
 
+	this->_is_nickname_set = false;
+	this->_is_username_set = false;
 	this->_fd = -1;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_is_authenticated = false; 
@@ -19,6 +21,8 @@ User::User(int fd, Server* s)
 	this->_fullname = "";
 	this->_nickname = "*";
 
+	this->_is_nickname_set = false;
+	this->_is_username_set = false;
 	this->_fd = fd;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_is_authenticated = false; 
@@ -83,11 +87,6 @@ void	User::set_authenticated(bool authenticated)
 	this->_is_authenticated = authenticated;
 }
 
-void	User::set_registered(bool registered)
-{
-	this->_is_registered = registered;
-}
-
 std::string User::get_nickname() const{
 	return this->_nickname;
 }
@@ -110,10 +109,16 @@ int User::search_channel(std::string name) const
 
 void User::set_nickname(std::string nickname){
 	this->_nickname = nickname;
+	this->_is_nickname_set = true;
+	if (this->_is_username_set && this->_is_nickname_set)
+		this->_is_registered = true;
 }
 
 void User::set_username(std::string username){
 	this->_username = username;
+	this->_is_username_set = true;
+	if (this->_is_username_set && this->_is_nickname_set)
+		this->_is_registered = true;
 }
 
 void User::set_fullname(std::string fullname){

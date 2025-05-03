@@ -84,13 +84,18 @@ void Server::nick(Request request, int user_id) {
     // this is case-sensitive check, user can change to same nickname but different capitalization
     if (nickname == this->_users[user_id].get_nickname()) return; 
     
-    const std::string old_nickname = this->_users[user_id].get_nickname();
-    this->_users[user_id].set_nickname(nickname);
-    
-    if (this->_users[user_id].is_registered()) { // if user is not still registered, we don't print any message yet, but we do it only uppon registration
-        this->print_msg_to_user(":" + old_nickname + "! " + "NICK :" + nickname, user_id);
+    if (this->_users[user_id].is_registered()) { // if user is already registered, we update his nickname and print a message
+        const std::string old_nickname = this->_users[user_id].get_nickname();
+        this->_users[user_id].set_nickname(nickname);
+        this->print_msg_to_user(":" + old_nickname + "! " + "NICK :" + nickname + "\n", user_id);
+    } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
+        this->_users[user_id].set_nickname(nickname);
+        if (this->_users[user_id].is_registered()) {
+            // print welcome message RPL_WELCOME (001)
+            std::string welcome_msg = ":" + SERVER_NAME + " 001 " + nickname + " :Welcome to " + SERVER_NAME +" Internet Relay Chat Network " + nickname + "\n";
+            this->print_msg_to_user(welcome_msg, user_id);
+        }
     }
-    // TODO(KL) else cause to check if now the user became registered and print message
 }
 
 /**
@@ -111,6 +116,10 @@ void Server::nick(Request request, int user_id) {
  * @param user_id 
  */
 void Server::user(Request request, int user_id) {
+    if (this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, ":You are already registered.\n", user_id);
+        return;
+    }
     if (!this->_users[user_id].is_authenticated()) {
         this->print_error_to_user(Error::ERR_NOAUTHENTICATION, ":You need to authenticate first.\n", user_id);
         return;
@@ -124,10 +133,6 @@ void Server::user(Request request, int user_id) {
             this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
             return;
         }
-    }
-    if (this->_users[user_id].is_registered()) {
-        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, ":You are already registered.\n", user_id);
-        return;
     }
 
     std::string username = request.getArgs()[0];
@@ -145,7 +150,11 @@ void Server::user(Request request, int user_id) {
     this->_users[user_id].set_username(username);
     this->_users[user_id].set_fullname(realname);
 
-    // TODO(KL) check if now the user became registered and print message
+    if (this->_users[user_id].is_registered()) {
+        // print welcome message RPL_WELCOME (001)
+        std::string welcome_msg = ":" + SERVER_NAME + " 001 " + this->_users[user_id].get_nickname() + " :Welcome to " + SERVER_NAME +" Internet Relay Chat Network " + this->_users[user_id].get_nickname() + "\n";
+        this->print_msg_to_user(welcome_msg, user_id);
+    }
 }
 
 /**
