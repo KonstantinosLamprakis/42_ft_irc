@@ -13,23 +13,26 @@ pollfd	Server::init_pollfd()
 	return (new_pollfd);
 }
 
-Server::Server() 
+Server::Server() : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
+_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
 {
 	this->_port = -1;
 	this->_password = "";
 	this->_connection_fds.push_back(init_pollfd());
-	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
+	this->_users.push_back(User(this->_sockfd, this)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
 	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
-Server::Server(int port, std::string password){
+Server::Server(int port, std::string password) : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
+_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
+{
 	this->_port = port;
 	this->_password = password;
 	this->_connection_fds.push_back(init_pollfd());
-	this->_users.push_back(User(this->_sockfd)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
+	this->_users.push_back(User(this->_sockfd, this)); // Adding server as placeholder to keep _users and _connection_fds indexes in sync
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
@@ -128,7 +131,7 @@ void	Server::communicate(int i)
 		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
 		str.pop_back(); //remove \n at the end
 		Request in = parse(str);
-		execute(in, i);
+		execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
 	}catch(const std::exception &e){
 		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
 	}
@@ -149,7 +152,7 @@ void	Server::accept_connection()
 		this->_connection_fds.push_back(init_pollfd());
 		this->_connection_fds[this->_amnt_connections].fd = new_connection_fd;
 		this->_amnt_connections++;
-		this->_users.push_back(User(new_connection_fd));
+		this->_users.push_back(User(new_connection_fd, this));
 	}
 }
 
@@ -180,6 +183,7 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 					this->accept_connection();
 				else
 					this->communicate(i);
+				continue ; // it looks like we need to call poll before EVERY time we call accept, send, recv(eval sheet)
 			}
 			if (this->_connection_fds[i].revents & POLLHUP)
 			{
@@ -332,3 +336,4 @@ void	Server::close_and_free_socket(std::string err_msg)
 	freeaddrinfo(this->_server_info);
 	close(this->_sockfd);
 }
+
