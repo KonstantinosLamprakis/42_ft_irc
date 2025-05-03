@@ -20,6 +20,7 @@
 # include "Utils.hpp"
 # include "Request.hpp"
 # include "User.hpp"
+# include "Channel.hpp"
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 
@@ -68,17 +69,12 @@ class Server
 		std::vector<struct pollfd>	_connection_fds;
 		int							_amnt_connections;
 		static bool					_signal_status;
-		std::vector<User>			_users;
-		std::vector<std::string>	_avlb_commands;
-		
+		std::vector<Channel>		_channels;
+		std::vector<User>			_users;		
 		
 		public:
 		Server();
 		Server(int port, std::string password);
-		
-		const std::vector<char>			_channel_modes_allowed;
-		const std::vector<char>			_avlb_user_modes; // seems like we only need the one for operator mode
-		
 		
 		void		start();
 		Request 	parse(std::string input) const;

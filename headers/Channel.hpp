@@ -3,29 +3,31 @@
 
 # include <string>
 # include <vector>
-# include "User.hpp"
 # include "Exceptions.hpp"
-# include "Utils.hpp"
-# include "Server.hpp"
 
-class	Server;
+# define MAX_USERS_PER_CHANNEL 3
 
 class Channel{
 	private:
 		std::string				_name;
-		std::string				_channel_type;
-		std::vector<class User>	_users;
+		std::vector<std::string>	_users;
+		std::vector<std::string>	_operators;
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
-		class Server*			_server;
 
 	public:
-	Channel(std::string name, User creator);
+	Channel(std::string name, std::string creator);
 
-	int			check_name_valid(std::string name);
-	std::string	choose_type(std::string name);
 	void		add_channel_mode(char c);
 	void		remove_channel_mode(char c);
+
+	void 		add_user(std::string user);
+	void		remove_user(std::string user);
+
+	std::string	get_topic() const;
+	void		set_topic(std::string topic);
+
+	std::string	get_name() const;
 };
 
 #endif

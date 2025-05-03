@@ -245,6 +245,14 @@ void Server::join(Request request, int user_id) {
         }
     }
 
+
+    // if (this->_users[user_id].search_channel(channels[i]) != -1) { // user already joined the channel
+    //     continue;
+    // }
+
+    // for (int i = 0; i < channels.size(); i++) {
+    // }
+
     // TODO(KL) finish this command
     // check if user reached CHANNEL_PER_USER_LIMIT
 }

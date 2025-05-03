@@ -21,4 +21,10 @@ class	ChannelCreationFailed : public std::exception
 		const char* what() const throw();
 };
 
+class	UserAdditionFailed : public std::exception
+{
+	public:
+		const char* what() const throw();
+};
+
 #endif

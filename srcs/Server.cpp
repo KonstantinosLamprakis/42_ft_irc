@@ -13,9 +13,7 @@ pollfd	Server::init_pollfd()
 	return (new_pollfd);
 }
 
-Server::Server() : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
-_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
-{
+Server::Server(){
 	this->_port = -1;
 	this->_password = "";
 	this->_connection_fds.push_back(init_pollfd());
@@ -23,11 +21,9 @@ _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjust
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
-	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
-Server::Server(int port, std::string password) : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
-_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
+Server::Server(int port, std::string password)
 {
 	this->_port = port;
 	this->_password = password;
@@ -36,7 +32,6 @@ _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjust
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
-	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
 /**
@@ -92,6 +87,7 @@ void Server::close_connection(int user_index){
 	close (this->_connection_fds[user_index].fd);
 	this->_connection_fds.erase(_connection_fds.begin() + user_index);
 	this->_users.erase(_users.begin() + user_index);
+	// TODO(KL) remove user from all channels
 	this->_amnt_connections--;
 }
 /**
