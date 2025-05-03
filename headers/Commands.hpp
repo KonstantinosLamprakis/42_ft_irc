@@ -1,6 +1,7 @@
 #ifndef COMMANDS_HPP
 # define COMMANDS_HPP
 
-# include "../headers/Server.hpp"
+# include "Server.hpp"
+# include "Exceptions.hpp"
 
 #endif

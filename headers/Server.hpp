@@ -57,6 +57,9 @@ namespace Error {
 	const std::string ERR_TOOMANYCHANNELS = "405";
 	const std::string ERR_NOSUCHCHANNEL = "403";
 	const std::string ERR_ILLEGALCHANNELNAME = "479";
+	const std::string ERR_BADCHANNELKEY = "475";
+	const std::string ERR_CHANNELISFULL = "471";
+	const std::string ERR_NOTREGISTERED = "451";
 }
 
 class Server

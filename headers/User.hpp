@@ -32,7 +32,8 @@ class User{
 		std::string	get_username() const;
 		std::string	get_fullname() const;
 		std::string	get_nickname() const;
-		bool		is_user_in_channel(std::string channel_name) const;
+		bool		is_user_in_channel(const std::string channel_name) const;
+		int 		get_channel_number() const;
 
 		// setters
 		void	set_username(std::string nickname);

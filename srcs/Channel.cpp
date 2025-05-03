@@ -1,8 +1,9 @@
 #include "../headers/Channel.hpp"
 
-Channel::Channel(std::string name, std::string creator)
+Channel::Channel(std::string name, std::string key, std::string creator)
 {
 	this->_name = name;
+	this->_key = key;
 	this->_users.push_back(creator);
 	this->_operators.push_back(creator);
 	this->_topic = "";
@@ -30,9 +31,13 @@ void Channel::remove_channel_mode(char c)
 	}
 }
 
-void Channel::add_user(std::string user){
+void Channel::add_user(std::string user, std::string key){
 	if (this->_users.size() >= MAX_USERS_PER_CHANNEL)
-		throw UserAdditionFailed();
+		throw MaxNumberOfUsersInChannel();
+
+	if (this->_key != "" && this->_key != key){
+		throw IncorrectKeyForChannel();
+	}
 
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
@@ -46,12 +51,15 @@ void Channel::add_user(std::string user){
  * @brief Remove user/operator if exists from channel, do nothing if doesn't exists
  * 
  * @param user 
+ * @return true if user was removed, false if user was not found
  */
-void Channel::remove_user(std::string user){
+bool Channel::remove_user(std::string user){
+	bool is_user_found = false;
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
 		if (this->_users[i] == user){
 			this->_users.erase(this->_users.begin() + i);
+			is_user_found = true;
 			break;
 		}
 	}
@@ -62,6 +70,7 @@ void Channel::remove_user(std::string user){
 			break;
 		}
 	}
+	return (is_user_found);
 }
 
 std::string	Channel::get_topic() const{

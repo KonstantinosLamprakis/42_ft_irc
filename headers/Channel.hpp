@@ -10,19 +10,20 @@
 class Channel{
 	private:
 		std::string				_name;
+		std::string				_key;
 		std::vector<std::string>	_users;
 		std::vector<std::string>	_operators;
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
 
 	public:
-	Channel(std::string name, std::string creator);
+	Channel(std::string name, std::string key, std::string creator);
 
 	void		add_channel_mode(char c);
 	void		remove_channel_mode(char c);
 
-	void 		add_user(std::string user);
-	void		remove_user(std::string user);
+	void 		add_user(std::string user, std::string key);
+	bool		remove_user(std::string user);
 
 	std::string	get_topic() const;
 	void		set_topic(std::string topic);

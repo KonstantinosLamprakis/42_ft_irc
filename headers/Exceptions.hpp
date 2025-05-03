@@ -21,7 +21,13 @@ class	ChannelCreationFailed : public std::exception
 		const char* what() const throw();
 };
 
-class	UserAdditionFailed : public std::exception
+class	MaxNumberOfUsersInChannel : public std::exception
+{
+	public:
+		const char* what() const throw();
+};
+
+class	IncorrectKeyForChannel : public std::exception
 {
 	public:
 		const char* what() const throw();

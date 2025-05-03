@@ -57,9 +57,13 @@ std::string User::get_fullname() const{
 	return this->_fullname;
 }
 
-bool User::is_user_in_channel(std::string channel_name) const {
-	if (std::find(this->_channels.begin(), this->_channels.end(), channel_name) != this->_channels.end())
-		return (true);
+bool User::is_user_in_channel(const std::string channel_name) const {
+	const std::string channel_Uppercase = toUppercase(channel_name);
+
+    for (unsigned long i = 0; i < this->_channels.size(); i++) {
+		if (toUppercase(this->_channels[i]) == channel_Uppercase)
+			return (true);
+	}
 	return (false);
 }
 
@@ -95,4 +99,8 @@ void User::remove_channel(std::string channel)
 			break;
 		}
 	}
+}
+
+int User::get_channel_number() const{
+	return this->_channels.size();
 }

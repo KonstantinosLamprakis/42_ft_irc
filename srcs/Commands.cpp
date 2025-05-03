@@ -190,12 +190,20 @@ void Server::quit(Request request, int user_id) {
  * @param user_id 
  */
 void Server::join(Request request, int user_id) {
-    if (request.getArgs().size() < 1 ) { // if more than 1, server only use the 1rst one
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        return;
+    }
+    if (request.getArgs().size() < 1 ) { // we expect 1 - 2 args, if there are more we ignore them
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
         return;
     }
-    if (request.getArgs()[0] == "0") { // if user wants to leave all the channels channel
-        // TODO(KL) remove user from all channels
+    if (request.getArgs()[0] == "0") { // if user wants to leave all the channels
+        for (unsigned long i = 0; i < this->_channels.size(); i++) {
+            if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
+                this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
+            }
+        }
         return;
     }
 
@@ -210,6 +218,11 @@ void Server::join(Request request, int user_id) {
     // verify all channels name starts with # and not invalid chars + length
     const std::string invalid_chars = "\a," + SPACE;
     for (size_t i = 0; i < channels.size(); i++) {
+        if (channels[i].size() == 0){
+            channels.erase(channels.begin() + i);
+            i--;
+            continue;
+        }
         if (channels[i].size() > 50){
             this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
             channels.erase(channels.begin() + i);
@@ -228,11 +241,6 @@ void Server::join(Request request, int user_id) {
             i--;
             continue;
         }
-        if (channels[i].size() == 0){
-            channels.erase(channels.begin() + i);
-            i--;
-            continue;
-        }
     }
 
     // parsing keys format: key1,key2
@@ -245,14 +253,46 @@ void Server::join(Request request, int user_id) {
         }
     }
 
+    for (unsigned long i = 0; i < channels.size(); i++) {
+        if (this->_users[user_id].is_user_in_channel(channels[i])) { // user already joined the channel
+            continue;
+        }
 
-    // if (this->_users[user_id].search_channel(channels[i]) != -1) { // user already joined the channel
-    //     continue;
-    // }
+        if (this->_users[user_id].get_channel_number() == CHANNEL_PER_USER_LIMIT) {
+            this->print_error_to_user(Error::ERR_TOOMANYCHANNELS, channels[i] + " :You have joined too many channels.\n", user_id);
+            continue;
+        }
 
-    // for (int i = 0; i < channels.size(); i++) {
-    // }
+        bool is_channel_exists = false;
+        const std::string channel_name = toUppercase(channels[i]);
+        for (unsigned long i = 0; i < this->_channels.size(); i++) {
+            if (toUppercase(this->_channels[i].get_name()) == channel_name){
+                is_channel_exists = true;
+                try {
+                    std::string key = "";
+                    if (keys.size() > i + 1) {
+                        key = keys[i];
+                    }
+                    this->_channels[i].add_user(this->_users[user_id].get_nickname(), key);
+                    this->_users[user_id].add_channel(channels[i]);
+                } catch (const MaxNumberOfUsersInChannel &e) {
+                    this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + ":Cannot join channel (+l). Channel is full.\n", user_id);
+                } catch (const IncorrectKeyForChannel &e) {
+                    this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
+                }
+                // TODO(KL) handle the case of invite only channels
+                break;
+            }
+        }
 
-    // TODO(KL) finish this command
-    // check if user reached CHANNEL_PER_USER_LIMIT
+        if (!is_channel_exists){
+            std::string key = "";
+            if (keys.size() > i + 1) {
+                key = keys[i];
+            }
+            this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
+            this->_users[user_id].add_channel(channels[i]);
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
+        }      
+    }
 }
