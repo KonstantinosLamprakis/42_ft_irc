@@ -104,7 +104,6 @@ class Server
 		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);
-		bool		get_signal_status();
 
 		// commands
 		void		pass(Request request, int user_index);
