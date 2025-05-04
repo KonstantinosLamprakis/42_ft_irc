@@ -20,7 +20,7 @@ class Request{
 		~Request();
 
 		std::string const getCommand() const;
-		std::vector<std::string> const getArgs() const;
+		std::vector<std::string> const get_args() const;
 };
 
 #endif

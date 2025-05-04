@@ -14,3 +14,29 @@ const char* ChannelCreationFailed::what() const throw()
 {
 	return ("The name entered is not a valid Channel name.");
 }
+
+const char* MaxNumberOfUsersInChannel::what() const throw()
+{
+	return ("The max amount of users is reached. No other user can be added.");
+}
+
+const char* IncorrectKeyForChannel::what() const throw()
+{
+	return ("The key that was provided is wrong.");
+}
+
+const char* ChannelNotFound::what() const throw()
+{
+	return ("Channel not found.");
+}
+
+const char* UserNotFound::what() const throw()
+{
+	return ("User not found.");
+}
+
+const char* UserNotInChannel::what() const throw()
+{
+	return ("User not in channel.");
+}
+

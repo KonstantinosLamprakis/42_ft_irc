@@ -1,104 +1,100 @@
 #include "../headers/Channel.hpp"
 
-std::string	Channel::choose_type(std::string name) //Channels with +, #, & have a limited lifetime; they are deleted after every user left the channel
+Channel::Channel(std::string name, std::string key, std::string creator)
 {
-	char	c = name[0];
-	std::string type_name;
-	switch (c)
-	{
-	case '+':
-		type_name = "no_channel_modes_allwd";
-		break;
-	case '&':
-		type_name = "local";
-		break;
-	case '#':
-		type_name = "normal";
-		break;
-	case '!':
-		type_name = "safe"; // will stay even if last user left the chat (all other channel types will be deleted)
-		break;
-	default:
-		throw ChannelCreationFailed();
-		break;
-	}
-	return (type_name);
-}
-
-void	Channel::add_channel_mode(char c)
-{
-	for (unsigned long i = 0; i < this->_server->_channel_modes_allowed.size(); i++)
-	{
-		if (this->_server->_channel_modes_allowed[i] == c)
-		{
-			for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
-			{
-				if (this->_channel_modes[n] == c)
-					return ;
-			}
-			this->_channel_modes.push_back(c);
-		}
-	}
-}
-
-void	Channel::remove_channel_mode(char c)
-{
-	for (unsigned long i = 0; i < this->_server->_channel_modes_allowed.size(); i++)
-	{
-		if (this->_server->_channel_modes_allowed[i] == c)
-		{
-			for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
-			{
-				if (this->_channel_modes[n] == c)
-				{
-					this->_channel_modes.erase(this->_channel_modes.begin() + n);
-					return ;
-				}
-			}
-		}
-	}
-}
-
-Channel::Channel(std::string name, User creator)
-{
-	if (check_name_valid(name) != 0)
-		throw ChannelCreationFailed();
-	// this->_channel_modes = {};
 	this->_name = name;
-	try
-	{
-		this->_channel_type = choose_type(name);
-	}
-	catch (std::exception &e)
-	{
-		throw e;
-	}
+	this->_key = key;
 	this->_users.push_back(creator);
-	if (this->_channel_type == "no_channel_modes_allwd")
-	{
-		creator.add_channel({name, {'-'}}); //if a user creates a new channel, its directly added to its "library" for + without operators
-		this->_channel_modes.push_back('t');
-	}
-	else
-	{
-		creator.add_channel({name, {'o'}}); //if a user creates a new channel, its directly added to its "library" with Operator mode
-		this->_channel_modes.push_back('t'); // here others could be added, for + channel that is not possible
-	}
-	if (_channel_type != "safe")
+	this->_operators.push_back(creator);
 	this->_topic = "";
 }
 
-int	Channel::check_name_valid(std::string name)
+void Channel::add_channel_mode(char c)
 {
-	std::string	name_ins;
+	for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+	{
+		if (this->_channel_modes[n] == c)
+			return ;
+	}
+	this->_channel_modes.push_back(c);
+}
 
-	name_ins = toUppercase(name); // channel names are case insensitive
-	if (name_ins.length() > 50)
-		return (1);
-	if 	(name_ins.find(' ') != std::string::npos || name_ins.find(':') != std::string::npos || \
-		name_ins.find(7) != std::string::npos || name_ins.find(',') != std::string::npos)
-		return (1);
-	if (name_ins[0] != '&' && name_ins[0] != '#' && name_ins[0] != '+' && name_ins[0] != '!')
-		return (1);
-	return (0);
+void Channel::remove_channel_mode(char c)
+{
+	for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+	{
+		if (this->_channel_modes[n] == c)
+		{
+			this->_channel_modes.erase(this->_channel_modes.begin() + n);
+			return ;
+		}
+	}
+}
+
+void Channel::add_user(std::string user, std::string key){
+	if (this->_users.size() >= MAX_USERS_PER_CHANNEL)
+		throw MaxNumberOfUsersInChannel();
+
+	if (this->_key != "" && this->_key != key){
+		throw IncorrectKeyForChannel();
+	}
+
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (this->_users[i] == user)
+			return; 
+	}
+	this->_users.push_back(user);
+}
+
+/**
+ * @brief Remove user/operator if exists from channel, do nothing if doesn't exists
+ * 
+ * @param user 
+ * @return true if user was removed, false if user was not found
+ */
+bool Channel::remove_user(std::string user){
+	bool is_user_found = false;
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (this->_users[i] == user){
+			this->_users.erase(this->_users.begin() + i);
+			is_user_found = true;
+			break;
+		}
+	}
+	for (unsigned long i = 0; i < this->_operators.size(); i++)
+	{
+		if (this->_operators[i] == user){
+			this->_operators.erase(this->_operators.begin() + i);
+			break;
+		}
+	}
+	return (is_user_found);
+}
+
+std::vector<std::string> Channel::get_users() const{
+	return (this->_users); // returns by value, not a pointer, so caller can not modify the _users inside the class
+}
+
+std::string	Channel::get_topic() const{
+	return (this->_topic);
+}
+
+void Channel::set_topic(std::string topic){
+	this->_topic = topic;
+}
+
+std::string	Channel::get_name() const{
+	return (this->_name);
+}
+
+bool Channel::is_user_in_channel(const std::string nickname) const {
+	const std::string nickname_Uppercase = to_uppercase(nickname);
+
+    for (unsigned long i = 0; i < this->_users.size(); i++) {
+		if (to_uppercase(this->_users[i]) == nickname_Uppercase)
+			return (true);
+	}
+	return (false);
 }

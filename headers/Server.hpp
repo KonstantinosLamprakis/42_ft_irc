@@ -20,10 +20,12 @@
 # include "Utils.hpp"
 # include "Request.hpp"
 # include "User.hpp"
+# include "Channel.hpp"
 
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 
 # define BUFFER_SIZE 512
+# define CHANNEL_PER_USER_LIMIT 1
 
 const std::string SERVER_NAME = "42_IRC";
 class User;
@@ -35,7 +37,6 @@ namespace Command {
 	const std::string USER = "USER";
 	const std::string JOIN = "JOIN";
 	const std::string PRIVMSG = "PRIVMSG";
-	const std::string NOTICE = "NOTICE";
 	const std::string QUIT = "QUIT";
 	// Operator's commands
 	const std::string KICK = "KICK";
@@ -44,6 +45,7 @@ namespace Command {
 	const std::string MODE = "MODE";
 };
 
+// errors starting with 9 are custom
 namespace Error {
 	const std::string ERR_ALREADYREGISTERED = "462";
 	const std::string ERR_NEEDMOREPARAMS = "461";
@@ -52,6 +54,20 @@ namespace Error {
 	const std::string ERR_NONICKNAMEGIVEN = "431";
 	const std::string ERR_NOAUTHENTICATION = "998";
 	const std::string ERR_ERRONEUSNICKNAME = "432";
+	const std::string ERR_UNKNOWNCOMMAND = "421";
+	const std::string ERR_TOOMANYCHANNELS = "405";
+	const std::string ERR_NOSUCHCHANNEL = "403";
+	const std::string ERR_ILLEGALCHANNELNAME = "479";
+	const std::string ERR_BADCHANNELKEY = "475";
+	const std::string ERR_CHANNELISFULL = "471";
+	const std::string ERR_NOTREGISTERED = "451";
+	const std::string ERR_NORECIPIENT = "411";
+	const std::string ERR_NOTEXTTOSEND = "412";
+	const std::string ERR_NOSUCHNICK = "401";
+	const std::string ERR_CANNOTSENDTOCHAN = "404";
+	const std::string ERR_TOOMANYTARGETS = "997";
+	const std::string ERR_USERSDONTMATCH = "502";
+	const std::string ERR_MODENOTFORCHANNEL = "996";
 }
 
 class Server
@@ -64,17 +80,12 @@ class Server
 		std::vector<struct pollfd>	_connection_fds;
 		int							_amnt_connections;
 		static bool					_signal_status;
-		std::vector<User>			_users;
-		std::vector<std::string>	_avlb_commands;
-		
+		std::vector<Channel>		_channels;
+		std::vector<User>			_users;		
 		
 		public:
 		Server();
 		Server(int port, std::string password);
-		
-		const std::vector<char>			_channel_modes_allowed;
-		const std::vector<char>			_avlb_user_modes; // seems like we only need the one for operator mode
-		
 		
 		void		start();
 		Request 	parse(std::string input) const;
@@ -88,16 +99,20 @@ class Server
 		pollfd		init_pollfd();
 		void		send_data(int n, std::string str);
 		void		print_msg_to_user(std::string msg, int user_index);
+		void		print_msg_to_user_with_nickname(std::string msg, std::string nickname);
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
-		// TODO(KL) create also a func: print_msg_to_channel
+		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
+		bool 		does_user_exist(std::string nickname);
+		int 		get_channel_index(std::string channel_name);
 
 		// commands
 		void		pass(Request request, int user_index);
 		void		nick(Request request, int user_index);
 		void		user(Request request, int user_index);
 		void		quit(Request request, int user_index);
-
-
+		void		join(Request request, int user_index);
+		void		privmsg(Request request, int user_index);
+		void		mode(Request request, int user_index);
 };
 
 #endif

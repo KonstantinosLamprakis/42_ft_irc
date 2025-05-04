@@ -13,9 +13,7 @@ pollfd	Server::init_pollfd()
 	return (new_pollfd);
 }
 
-Server::Server() : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
-_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
-{
+Server::Server(){
 	this->_port = -1;
 	this->_password = "";
 	this->_connection_fds.push_back(init_pollfd());
@@ -23,11 +21,9 @@ _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjust
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
-	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
-Server::Server(int port, std::string password) : _channel_modes_allowed({'O', 'o', 'v', 'a', 'i', 'm', 'n', 'q', 'p', 's', 'r', 't', 'k', 'l', 'b', 'e' ,'I'}), \
-_avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjusted according to our needs
+Server::Server(int port, std::string password)
 {
 	this->_port = port;
 	this->_password = password;
@@ -36,7 +32,6 @@ _avlb_user_modes({'a', 'i', 'w', 'r', 'o', 'O', 's', '-'})//  needs to be adjust
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
-	this->_avlb_commands = {"PASS", "NICK", "USER", "JOIN", "KICK", "INVITE", "TOPIC", "MODE"};
 }
 
 /**
@@ -75,6 +70,48 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
 }
 
 /**
+ * @brief prints a message to a user with a spesific nickname who should be registered
+ * 
+ * @param msg 
+ * @param nickname 
+ */
+void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickname){
+	std::string uppercase_nickname = to_uppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname){
+			if (!this->_users[i].is_registered()) continue;
+			print_msg_to_user(msg, i);
+			return;
+		}
+	}
+	throw UserNotFound();
+}
+
+/**
+ * @brief Prints message to all users of a channel except the sender
+ * 
+ * @param msg 
+ * @param channel 
+ * @param sender_nick 
+ */
+void Server::print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick){
+	int channel_index = this->get_channel_index(channel);
+	if (channel_index == -1)
+		throw ChannelNotFound();
+	std::string uppercase_sender_nick = to_uppercase(sender_nick);
+	if (!this->_channels[channel_index].is_user_in_channel(sender_nick))
+		throw UserNotInChannel();
+	std::vector<std::string> channel_users = this->_channels[channel_index].get_users();
+	for (unsigned long j = 0; j < channel_users.size(); j++)
+	{
+		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
+		print_msg_to_user_with_nickname(msg, channel_users[channel_index]);
+	}
+	return;
+}
+
+/**
  * @brief prints error values to a spesific user
  * 
  * @param numeric numeric should be of type namespace Error in server
@@ -92,6 +129,14 @@ void Server::close_connection(int user_index){
 	close (this->_connection_fds[user_index].fd);
 	this->_connection_fds.erase(_connection_fds.begin() + user_index);
 	this->_users.erase(_users.begin() + user_index);
+	for (unsigned long i = 0; i < this->_channels.size(); i++){
+		this->_channels[i].remove_user(this->_users[user_index].get_nickname());
+		// TODO(KL) should I print a message to the channel that the user left?
+		if (this->_channels[i].get_users().empty()){
+			this->_channels.erase(_channels.begin() + i);
+			i--;
+		}
+	}
 	this->_amnt_connections--;
 }
 /**
@@ -126,15 +171,11 @@ void	Server::communicate(int i)
 		buff[bytes_recvd + 1] = '\0';
 		str = str + buff;
 	}
-	try {
-		if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
-		if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
-		str.pop_back(); //remove \n at the end
-		Request in = parse(str);
-		execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
-	}catch(const std::exception &e){
-		this->print_msg_to_user("Error: " + std::string(e.what()) + "\n", i);
-	}
+	if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
+	if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
+	str.pop_back(); //remove \n at the end
+	Request in = parse(str);
+	execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
 }
 
 void	Server::accept_connection()
@@ -261,13 +302,6 @@ void	Server::start()
 }
 
 Request Server::parse(std::string input) const {
-	// just to avoid segfault, this should never happen and it already handled on caller
-	if (input.empty()) { 
-		throw std::invalid_argument("Input cannot be empty.");
-	} else if (SPACE.find(input[0]) != std::string::npos) {
-		throw std::invalid_argument("Input cannot start with a space.");
-	}
-
 	std::string command;
 	std::vector<std::string> args;
 	std::istringstream stream(input);
@@ -291,32 +325,30 @@ Request Server::parse(std::string input) const {
 }
 
 void Server::execute(Request request, int user_index){
-	std::string upperCaseCommand = toUppercase(request.getCommand());
-	if (upperCaseCommand == Command::PASS) 
+	std::string uppercase_command = to_uppercase(request.getCommand());
+	if (uppercase_command == Command::PASS) 
 		this->pass(request, user_index);
-	else if (upperCaseCommand == Command::NICK)
+	else if (uppercase_command == Command::NICK)
 		this->nick(request, user_index);
-	else if (upperCaseCommand == Command::USER)
+	else if (uppercase_command == Command::USER)
 		this->user(request, user_index);
-	else if (upperCaseCommand == Command::JOIN)
-		std::cout << "TODO JOIN" << std::endl;
-	else if (upperCaseCommand == Command::PRIVMSG)
-		std::cout << "TODO PRIVMSG" << std::endl;
-	else if (upperCaseCommand == Command::NOTICE)
-		std::cout << "TODO NOTICE" << std::endl;
-	else if (upperCaseCommand == Command::QUIT)
+	else if (uppercase_command == Command::JOIN)
+		this->join(request, user_index);
+	else if (uppercase_command == Command::PRIVMSG)
+		this->privmsg(request, user_index);
+	else if (uppercase_command == Command::QUIT)
 		this->quit(request, user_index);
 	// operator's commands
-	else if (upperCaseCommand == Command::KICK)
+	else if (uppercase_command == Command::KICK)
 		std::cout << "TODO KICK" << std::endl;
-	else if (upperCaseCommand == Command::INVITE)
+	else if (uppercase_command == Command::INVITE)
 		std::cout << "TODO INVITE" << std::endl;
-	else if (upperCaseCommand == Command::TOPIC)
+	else if (uppercase_command == Command::TOPIC)
 		std::cout << "TODO TOPIC" << std::endl;
-	else if (upperCaseCommand == Command::MODE)
-		std::cout << "TODO MODE" << std::endl;
+	else if (uppercase_command == Command::MODE)
+		this->mode(request, user_index);
 	else
-		throw std::invalid_argument("Invalid command.");
+		this->print_error_to_user(Error::ERR_UNKNOWNCOMMAND, request.getCommand() + " :Unknown command.\n", user_index);
 }
 
 void	Server::signal_handler(int signal)
@@ -337,3 +369,28 @@ void	Server::close_and_free_socket(std::string err_msg)
 	close(this->_sockfd);
 }
 
+bool Server::does_user_exist(std::string nickname){
+	std::string uppercase_nickname = to_uppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++){
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * @brief 
+ * 
+ * @param channel_name 
+ * @return int -1 if not found, index of the channel if found 
+ */
+int Server::get_channel_index(std::string channel_name){
+	std::string uppercase_channel = to_uppercase(channel_name);
+	for (unsigned long i = 0; i < this->_channels.size(); i++)
+	{
+		if (to_uppercase(this->_channels[i].get_name()) == uppercase_channel){
+			return (i);
+		}
+	}
+	return (-1);
+}

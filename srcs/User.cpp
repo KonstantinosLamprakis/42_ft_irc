@@ -6,6 +6,8 @@ User::User(Server* s)
 	this->_fullname = "";
 	this->_nickname = "*";
 
+	this->_is_nickname_set = false;
+	this->_is_username_set = false;
 	this->_fd = -1;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_is_authenticated = false; 
@@ -19,53 +21,13 @@ User::User(int fd, Server* s)
 	this->_fullname = "";
 	this->_nickname = "*";
 
+	this->_is_nickname_set = false;
+	this->_is_username_set = false;
 	this->_fd = fd;
 	this->_status_usr_creation = 0; // e.g. 0 for connection and the three remaining fields need to be filled, which increases value + 1; if already set (not "" anymore) - no increase
 	this->_is_authenticated = false; 
 	this->_is_registered = false;
 	this->_server = s;
-}
-
-void	User::add_user_mode(std::string channel_name, char c)
-{
-	std::map<std::string, std::vector<char>>::iterator	it;
-
-	for (unsigned long i = 0; i < this->_server->_avlb_user_modes.size(); i++)
-	{
-		if (this->_server->_avlb_user_modes[i] == c)
-		{
-			it = this->_channels.find(channel_name);
-			if (it == this->_channels.end())
-				return ; // if necessary print statement
-			for (unsigned long n = 0; n < sizeof(this->_channels.find(channel_name)->second); n++)
-			{
-				if (this->_channels.find(channel_name)->second[n] == c)
-					return ; // if necessary print
-			}
-			this->_channels.find(channel_name)->second.push_back(c);
-		}
-	}
-}
-
-void	User::remove_user_mode(std::string channel_name, char c)
-{
-	std::map<std::string, std::vector<char>>::iterator	it;
-
-	for (unsigned long i = 0; i < this->_server->_avlb_user_modes.size(); i++)
-	{
-		if (this->_server->_avlb_user_modes[i] == c)
-		{
-			it = this->_channels.find(channel_name);
-			if (it == this->_channels.end())
-				return ; // if necessary print statement
-			for (unsigned long n = 0; n < sizeof(this->_channels.find(channel_name)->second); n++)
-			{
-				if (this->_channels.find(channel_name)->second[n] == c)
-					this->_channels.find(channel_name)->second.erase(this->_channels.find(channel_name)->second.begin() + n);
-				}
-			return ; // if necessary print
-		}
-	}
 }
 
 bool	User::is_authenticated() const
@@ -83,11 +45,6 @@ void	User::set_authenticated(bool authenticated)
 	this->_is_authenticated = authenticated;
 }
 
-void	User::set_registered(bool registered)
-{
-	this->_is_registered = registered;
-}
-
 std::string User::get_nickname() const{
 	return this->_nickname;
 }
@@ -100,32 +57,50 @@ std::string User::get_fullname() const{
 	return this->_fullname;
 }
 
-int User::search_channel(std::string name) const
-{
-	if (this->_channels.find(name) != _channels.end())
-		return (0); // returns true or false depending on creator mode or not
-	return (1); //return -1 if user is not in the channel
-}
+bool User::is_user_in_channel(const std::string channel_name) const {
+	const std::string channel_Uppercase = to_uppercase(channel_name);
 
+    for (unsigned long i = 0; i < this->_channels.size(); i++) {
+		if (to_uppercase(this->_channels[i]) == channel_Uppercase)
+			return (true);
+	}
+	return (false);
+}
 
 void User::set_nickname(std::string nickname){
 	this->_nickname = nickname;
+	this->_is_nickname_set = true;
+	if (this->_is_username_set && this->_is_nickname_set)
+		this->_is_registered = true;
 }
 
 void User::set_username(std::string username){
 	this->_username = username;
+	this->_is_username_set = true;
+	if (this->_is_username_set && this->_is_nickname_set)
+		this->_is_registered = true;
 }
 
 void User::set_fullname(std::string fullname){
 	this->_fullname = fullname;
 }
 
-void User::add_channel(std::pair<std::string, std::vector<char>> new_channel)
+void User::add_channel(std::string new_channel)
 {
-	this->_channels.insert(new_channel);
+	this->_channels.push_back(new_channel);
 }
 
 void User::remove_channel(std::string channel)
 {
-	this->_channels.erase(channel);
+	for (unsigned long i = 0; i < this->_channels.size(); i++)
+	{
+		if (this->_channels[i] == channel){
+			this->_channels.erase(this->_channels.begin() + i);
+			break;
+		}
+	}
+}
+
+int User::get_channel_number() const{
+	return this->_channels.size();
 }
