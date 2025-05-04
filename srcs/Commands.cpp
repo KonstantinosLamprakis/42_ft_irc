@@ -264,30 +264,8 @@ void Server::join(Request request, int user_id) {
             continue;
         }
 
-        bool is_channel_exists = false;
-        const std::string channel_name = to_uppercase(channels[i]);
-        for (unsigned long i = 0; i < this->_channels.size(); i++) {
-            if (to_uppercase(this->_channels[i].get_name()) == channel_name){
-                is_channel_exists = true;
-                try {
-                    std::string key = "";
-                    if (keys.size() > i + 1) {
-                        key = keys[i];
-                    }
-                    this->_channels[i].add_user(this->_users[user_id].get_nickname(), key);
-                    this->_users[user_id].add_channel(channels[i]);
-                } catch (const MaxNumberOfUsersInChannel &e) {
-                    this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + ":Cannot join channel (+l). Channel is full.\n", user_id);
-                } catch (const IncorrectKeyForChannel &e) {
-                    this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
-                }
-                // TODO(KL) handle the case of invite only channels
-                break;
-            }
-        }
-        // TODO(KL) print a message on all users when someone joins and leave
-
-        if (!is_channel_exists){
+        int channel_index = this->get_channel_index(channels[i]);
+        if (channel_index == -1){
             std::string key = "";
             if (keys.size() > i + 1) {
                 key = keys[i];
@@ -295,7 +273,23 @@ void Server::join(Request request, int user_id) {
             this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
-        }      
+            return;
+        }  
+
+        try {
+            std::string key = "";
+            if (keys.size() > i + 1) {
+                key = keys[i];
+            }
+            this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
+            this->_users[user_id].add_channel(channels[i]);
+        } catch (const MaxNumberOfUsersInChannel &e) {
+            this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + ":Cannot join channel (+l). Channel is full.\n", user_id);
+        } catch (const IncorrectKeyForChannel &e) {
+            this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
+        }
+        // TODO(KL) handle the case of invite only channels
+        // TODO(KL) print message when new user joins the channel
     }
 }
 

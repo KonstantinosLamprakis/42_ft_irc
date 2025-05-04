@@ -96,23 +96,19 @@ void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickna
  * @param sender_nick 
  */
 void Server::print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick){
-	std::string uppercase_channel = to_uppercase(channel);
+	int channel_index = this->get_channel_index(channel);
+	if (channel_index == -1)
+		throw ChannelNotFound();
 	std::string uppercase_sender_nick = to_uppercase(sender_nick);
-	for (unsigned long i = 0; i < this->_channels.size(); i++)
+	if (!this->_channels[channel_index].is_user_in_channel(sender_nick))
+		throw UserNotInChannel();
+	std::vector<std::string> channel_users = this->_channels[channel_index].get_users();
+	for (unsigned long j = 0; j < channel_users.size(); j++)
 	{
-		if (to_uppercase(this->_channels[i].get_name()) == uppercase_channel){
-			if (!this->_channels[i].is_user_in_channel(sender_nick))
-				throw UserNotInChannel();
-			std::vector<std::string> channel_users = this->_channels[i].get_users();
-			for (unsigned long j = 0; j < channel_users.size(); j++)
-			{
-				if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
-				print_msg_to_user_with_nickname(msg, channel_users[i]);
-			}
-			return;
-		}
-	}	
-	throw ChannelNotFound();
+		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
+		print_msg_to_user_with_nickname(msg, channel_users[channel_index]);
+	}
+	return;
 }
 
 /**
@@ -380,4 +376,21 @@ bool Server::does_user_exist(std::string nickname){
 			return true;
 	}
 	return false;
+}
+
+/**
+ * @brief 
+ * 
+ * @param channel_name 
+ * @return int -1 if not found, index of the channel if found 
+ */
+int Server::get_channel_index(std::string channel_name){
+	std::string uppercase_channel = to_uppercase(channel_name);
+	for (unsigned long i = 0; i < this->_channels.size(); i++)
+	{
+		if (to_uppercase(this->_channels[i].get_name()) == uppercase_channel){
+			return (i);
+		}
+	}
+	return (-1);
 }

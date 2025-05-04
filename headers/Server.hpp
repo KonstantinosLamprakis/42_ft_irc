@@ -103,6 +103,7 @@ class Server
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
 		bool 		does_user_exist(std::string nickname);
+		int 		get_channel_index(std::string channel_name);
 
 		// commands
 		void		pass(Request request, int user_index);
