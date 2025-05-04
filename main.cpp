@@ -28,14 +28,14 @@ int main (int ac, char **argv)
 {
 	struct sigaction	s;
 
-	memset (&s, 0, sizeof (s));
 	s.sa_handler = (Server::signal_handler);
+	memset (&s, 0, sizeof (s));
+	sigaction(SIGINT, &s, NULL);
+	sigaction(SIGQUIT, &s, NULL);
 	try
 	{
-		sigaction(SIGINT, &s, NULL);
-		sigaction(SIGQUIT, &s, NULL);
-		validateInput(ac, argv);
 		Server	irc_server(std::stoi(argv[1]), argv[2]);
+		validateInput(ac, argv);
 		irc_server.start();
 		irc_server.close_and_free_socket(std::string());
 	}

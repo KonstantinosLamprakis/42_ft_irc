@@ -39,4 +39,3 @@ const char* UserNotInChannel::what() const throw()
 {
 	return ("User not in channel.");
 }
-
