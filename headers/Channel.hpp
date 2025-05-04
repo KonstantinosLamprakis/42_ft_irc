@@ -3,6 +3,8 @@
 
 # include <string>
 # include <vector>
+# include <ctime>
+
 # include "Exceptions.hpp"
 # include "Utils.hpp"
 
@@ -20,12 +22,14 @@ class Channel{
 		std::vector<std::string>	_operators;
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
+		std::time_t 			_creation_timestamp;
 
 	public:
 	Channel(std::string name, std::string key, std::string creator);
 
 	void		add_channel_mode(char c);
 	void		remove_channel_mode(char c);
+	std::string	get_modes();
 
 	void 		add_user(std::string user, std::string key);
 	bool		remove_user(std::string user);
@@ -36,6 +40,7 @@ class Channel{
 	void		set_topic(std::string topic);
 
 	std::string	get_name() const;
+	std::string get_creation_timestamp() const;
 };
 
 #endif

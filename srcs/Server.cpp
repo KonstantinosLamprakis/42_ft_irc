@@ -118,9 +118,24 @@ void Server::print_msg_to_channel(std::string msg, std::string channel, std::str
  * @param error_msg 
  * @param user_index 
  */
-void	Server::print_error_to_user(std::string numeric, std::string error_msg, int user_index){
+void Server::print_error_to_user(std::string numeric, std::string error_msg, int user_index){
 	std::string target = this->_users[user_index].get_nickname();
 	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + error_msg + "\n";
+	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+}
+
+/**
+ * @brief prints noumeric RPL (reply) to a spesific user
+ * 
+ * 
+ * @param numeric numeric should be of type namespace Error in server
+ * @param msg 
+ * @param user_index 
+ */
+void Server::print_reply_to_user(std::string numeric, std::string msg, int user_index){
+	std::string target = this->_users[user_index].get_nickname();
+	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }

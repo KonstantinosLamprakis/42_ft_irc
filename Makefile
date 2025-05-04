@@ -17,7 +17,6 @@ Commands.cpp \
 Utils.cpp \
 Channel.cpp
 
-
 HEADERS_FILES = $(HEADERS_FOLDER)/User.hpp \
 $(HEADERS_FOLDER)/Server.hpp \
 $(HEADERS_FOLDER)/Channel.hpp \

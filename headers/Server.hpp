@@ -45,6 +45,12 @@ namespace Command {
 	const std::string MODE = "MODE";
 };
 
+// noumeric replies to users
+namespace RPL {
+	const std::string RPL_CHANNELMODEIS = "324";
+	const std::string RPL_CREATIONTIME = "329";
+}
+
 // errors starting with 9 are custom
 namespace Error {
 	const std::string ERR_ALREADYREGISTERED = "462";
@@ -101,6 +107,7 @@ class Server
 		void		print_msg_to_user(std::string msg, int user_index);
 		void		print_msg_to_user_with_nickname(std::string msg, std::string nickname);
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
+		void		print_reply_to_user(std::string numeric, std::string msg, int user_index);
 		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);

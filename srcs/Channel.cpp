@@ -7,6 +7,7 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 	this->_users.push_back(creator);
 	this->_operators.push_back(creator);
 	this->_topic = "";
+	this->_creation_timestamp = std::time(nullptr);
 }
 
 void Channel::add_channel_mode(char c)
@@ -97,4 +98,16 @@ bool Channel::is_user_in_channel(const std::string nickname) const {
 			return (true);
 	}
 	return (false);
+}
+
+std::string	Channel::get_modes(){
+	if (this->_channel_modes.empty())
+		return ("");
+
+	std::string result(this->_channel_modes.begin(), this->_channel_modes.end());
+	return (result);
+}
+
+std::string Channel::get_creation_timestamp() const {
+	return (std::to_string(this->_creation_timestamp));
 }

@@ -374,14 +374,24 @@ void Server::mode(Request request, int user_id){
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
         return;
     }
-    std::string target_uppercase = to_uppercase(request.get_args()[0]);
-    if (target_uppercase == to_uppercase(this->_users[user_id].get_nickname())){
+    std::string target = request.get_args()[0];
+    if (to_uppercase(target) == to_uppercase(this->_users[user_id].get_nickname())){
         // we only support MODE command for channel, not users as its mentioned in task's description
         this->print_error_to_user(Error::ERR_MODENOTFORCHANNEL, ":MODE comand is only supported for channels, not users.\n", user_id);
         return;
-    } else if (this->does_user_exist(target_uppercase)){
+    } else if (this->does_user_exist(target)){
         this->print_error_to_user(Error::ERR_USERSDONTMATCH, ":Can't change mode for other users.\n", user_id);
         return;
     }
     // handle user mode for channel
+    int channel_index = this->get_channel_index(target);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, target + " :No such channel.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() == 1 || request.get_args()[1] == ""){
+        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target + " +" + this->_channels[channel_index].get_modes() + "\n", user_id);
+        this->print_reply_to_user(RPL::RPL_CREATIONTIME, target + " " + this->_channels[channel_index].get_creation_timestamp() + "\n", user_id);
+    }
+    // TODO(KL) implement the rest argiuments
 }
