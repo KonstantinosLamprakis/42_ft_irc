@@ -40,3 +40,7 @@ const char* UserNotInChannel::what() const throw()
 	return ("User not in channel.");
 }
 
+const char* SignalReceived::what() const throw()
+{
+	return ("User not in channel.");
+}

@@ -37,7 +37,13 @@ int main (int ac, char **argv)
 		validateInput(ac, argv);
 		Server	irc_server(std::stoi(argv[1]), argv[2]);
 		irc_server.start();
+		if (irc_server.get_signal_status() == true)
+			throw SignalReceived();
 		irc_server.close_and_free_socket(std::string());
+	}
+	catch (const SignalReceived& e)
+	{
+		return (0);
 	}
 	catch(const std::exception& e){
 		std::cout << e.what() << std::endl;

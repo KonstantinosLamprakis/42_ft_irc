@@ -51,4 +51,10 @@ class	UserNotFound : public std::exception
 		const char* what() const throw();
 };
 
+class	SignalReceived : public std::exception
+{
+	public:
+		const char* what() const throw();
+};
+
 #endif

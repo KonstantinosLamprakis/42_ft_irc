@@ -394,3 +394,8 @@ int Server::get_channel_index(std::string channel_name){
 	}
 	return (-1);
 }
+
+bool Server::get_signal_status()
+{
+	return (this->_signal_status);
+}
