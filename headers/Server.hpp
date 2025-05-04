@@ -66,6 +66,8 @@ namespace Error {
 	const std::string ERR_NOSUCHNICK = "401";
 	const std::string ERR_CANNOTSENDTOCHAN = "404";
 	const std::string ERR_TOOMANYTARGETS = "997";
+	const std::string ERR_USERSDONTMATCH = "502";
+	const std::string ERR_MODENOTFORCHANNEL = "996";
 }
 
 class Server
@@ -100,6 +102,7 @@ class Server
 		void		print_msg_to_user_with_nickname(std::string msg, std::string nickname);
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
+		bool 		does_user_exist(std::string nickname);
 
 		// commands
 		void		pass(Request request, int user_index);
@@ -108,6 +111,7 @@ class Server
 		void		quit(Request request, int user_index);
 		void		join(Request request, int user_index);
 		void		privmsg(Request request, int user_index);
+		void		mode(Request request, int user_index);
 };
 
 #endif

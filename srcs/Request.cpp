@@ -16,6 +16,6 @@ std::string const Request::getCommand() const{
     return this->_cmd;
 }
 
-std::vector<std::string> const Request::getArgs() const{
+std::vector<std::string> const Request::get_args() const{
     return this->_args;
 }

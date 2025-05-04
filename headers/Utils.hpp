@@ -9,8 +9,8 @@
 
 const std::string SPACE = "\t\n ";
 
-std::string toUppercase(const std::string &str);
+std::string to_uppercase(const std::string &str);
 
-void removeDuplicates(std::vector<std::string> &vec);
+void remove_duplicates(std::vector<std::string> &vec);
 
 #endif

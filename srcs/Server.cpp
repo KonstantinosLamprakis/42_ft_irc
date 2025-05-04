@@ -76,10 +76,10 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
  * @param nickname 
  */
 void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickname){
-	std::string uppercase_nickname = toUppercase(nickname);
+	std::string uppercase_nickname = to_uppercase(nickname);
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
-		if (toUppercase(this->_users[i].get_nickname()) == uppercase_nickname){
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname){
 			if (!this->_users[i].is_registered()) continue;
 			print_msg_to_user(msg, i);
 			return;
@@ -96,17 +96,17 @@ void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickna
  * @param sender_nick 
  */
 void Server::print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick){
-	std::string uppercase_channel = toUppercase(channel);
-	std::string uppercase_sender_nick = toUppercase(sender_nick);
+	std::string uppercase_channel = to_uppercase(channel);
+	std::string uppercase_sender_nick = to_uppercase(sender_nick);
 	for (unsigned long i = 0; i < this->_channels.size(); i++)
 	{
-		if (toUppercase(this->_channels[i].get_name()) == uppercase_channel){
+		if (to_uppercase(this->_channels[i].get_name()) == uppercase_channel){
 			if (!this->_channels[i].is_user_in_channel(sender_nick))
 				throw UserNotInChannel();
 			std::vector<std::string> channel_users = this->_channels[i].get_users();
 			for (unsigned long j = 0; j < channel_users.size(); j++)
 			{
-				if (toUppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
+				if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
 				print_msg_to_user_with_nickname(msg, channel_users[i]);
 			}
 			return;
@@ -133,7 +133,14 @@ void Server::close_connection(int user_index){
 	close (this->_connection_fds[user_index].fd);
 	this->_connection_fds.erase(_connection_fds.begin() + user_index);
 	this->_users.erase(_users.begin() + user_index);
-	// TODO(KL) remove user from all channels
+	for (unsigned long i = 0; i < this->_channels.size(); i++){
+		this->_channels[i].remove_user(this->_users[user_index].get_nickname());
+		// TODO(KL) should I print a message to the channel that the user left?
+		if (this->_channels[i].get_users().empty()){
+			this->_channels.erase(_channels.begin() + i);
+			i--;
+		}
+	}
 	this->_amnt_connections--;
 }
 /**
@@ -322,28 +329,28 @@ Request Server::parse(std::string input) const {
 }
 
 void Server::execute(Request request, int user_index){
-	std::string upperCaseCommand = toUppercase(request.getCommand());
-	if (upperCaseCommand == Command::PASS) 
+	std::string uppercase_command = to_uppercase(request.getCommand());
+	if (uppercase_command == Command::PASS) 
 		this->pass(request, user_index);
-	else if (upperCaseCommand == Command::NICK)
+	else if (uppercase_command == Command::NICK)
 		this->nick(request, user_index);
-	else if (upperCaseCommand == Command::USER)
+	else if (uppercase_command == Command::USER)
 		this->user(request, user_index);
-	else if (upperCaseCommand == Command::JOIN)
+	else if (uppercase_command == Command::JOIN)
 		this->join(request, user_index);
-	else if (upperCaseCommand == Command::PRIVMSG)
+	else if (uppercase_command == Command::PRIVMSG)
 		this->privmsg(request, user_index);
-	else if (upperCaseCommand == Command::QUIT)
+	else if (uppercase_command == Command::QUIT)
 		this->quit(request, user_index);
 	// operator's commands
-	else if (upperCaseCommand == Command::KICK)
+	else if (uppercase_command == Command::KICK)
 		std::cout << "TODO KICK" << std::endl;
-	else if (upperCaseCommand == Command::INVITE)
+	else if (uppercase_command == Command::INVITE)
 		std::cout << "TODO INVITE" << std::endl;
-	else if (upperCaseCommand == Command::TOPIC)
+	else if (uppercase_command == Command::TOPIC)
 		std::cout << "TODO TOPIC" << std::endl;
-	else if (upperCaseCommand == Command::MODE)
-		std::cout << "TODO MODE" << std::endl;
+	else if (uppercase_command == Command::MODE)
+		this->mode(request, user_index);
 	else
 		this->print_error_to_user(Error::ERR_UNKNOWNCOMMAND, request.getCommand() + " :Unknown command.\n", user_index);
 }
@@ -366,3 +373,11 @@ void	Server::close_and_free_socket(std::string err_msg)
 	close(this->_sockfd);
 }
 
+bool Server::does_user_exist(std::string nickname){
+	std::string uppercase_nickname = to_uppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++){
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname)
+			return true;
+	}
+	return false;
+}

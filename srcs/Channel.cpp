@@ -90,10 +90,10 @@ std::string	Channel::get_name() const{
 }
 
 bool Channel::is_user_in_channel(const std::string nickname) const {
-	const std::string nickname_Uppercase = toUppercase(nickname);
+	const std::string nickname_Uppercase = to_uppercase(nickname);
 
     for (unsigned long i = 0; i < this->_users.size(); i++) {
-		if (toUppercase(this->_users[i]) == nickname_Uppercase)
+		if (to_uppercase(this->_users[i]) == nickname_Uppercase)
 			return (true);
 	}
 	return (false);

@@ -21,11 +21,11 @@ void Server::pass(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_ALREADYREGISTERED, ":User is already registered.\n", user_id);
         return;
     }
-    if (request.getArgs().size() < 1 || request.getArgs()[0] == "") { // if more than 1, server only use the 1rst one
+    if (request.get_args().size() < 1 || request.get_args()[0] == "") { // if more than 1, server only use the 1rst one
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
         return;
     }
-    if (request.getArgs()[0] != this->_password) {
+    if (request.get_args()[0] != this->_password) {
         this->print_error_to_user(Error::ERR_PASSWDMISMATCH, ":Password Incorrect.\n", user_id);
         return;
     }
@@ -57,16 +57,16 @@ void Server::nick(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NOAUTHENTICATION, ":You need to authenticate first.\n", user_id);
         return;
     }
-    if (request.getArgs().size() < 1 || request.getArgs()[0] == "") { // if more than 1, server only use the 1rst one
+    if (request.get_args().size() < 1 || request.get_args()[0] == "") { // if more than 1, server only use the 1rst one
         this->print_error_to_user(Error::ERR_NONICKNAMEGIVEN, ":No nickname given.\n", user_id);
         return;
     }
 
-    std::string nickname = request.getArgs()[0];
-    std::string upperCaseNickname = toUppercase(nickname);
+    std::string nickname = request.get_args()[0];
+    std::string uppercase_nickname = to_uppercase(nickname);
     for (int i = 1; i < this->_amnt_connections; i++) {
         if (i == user_id) continue; // ignore if user has already same nickname
-        if (toUppercase(this->_users[i].get_nickname()) == upperCaseNickname) {
+        if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname) {
             this->print_error_to_user(Error::ERR_NICKNAMEINUSE, nickname + " :Nickname is already in use.\n", user_id);
             return;
         }
@@ -124,19 +124,19 @@ void Server::user(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NOAUTHENTICATION, ":You need to authenticate first.\n", user_id);
         return;
     }
-    if (request.getArgs().size() < 4) { // if more than 1, server only use the 1rst one
+    if (request.get_args().size() < 4) { // if more than 1, server only use the 1rst one
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
         return;
     }
     for (int i = 0; i < 4; i++) { // no param can be empty
-        if (request.getArgs()[i] == "") {
+        if (request.get_args()[i] == "") {
             this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
             return;
         }
     }
 
-    std::string username = request.getArgs()[0];
-    const std::string realname = request.getArgs()[3]; // we ignore the 2nd and 3rd args, hostname and servername
+    std::string username = request.get_args()[0];
+    const std::string realname = request.get_args()[3]; // we ignore the 2nd and 3rd args, hostname and servername
     
     // check for invalid characters: starting with digit, contain space or :, # or &
     const std::string invalid_chars = ":" + CHANNEL_MODE + SPACE;
@@ -194,11 +194,11 @@ void Server::join(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
         return;
     }
-    if (request.getArgs().size() < 1 ) { // we expect 1 - 2 args, if there are more we ignore them
+    if (request.get_args().size() < 1 ) { // we expect 1 - 2 args, if there are more we ignore them
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
         return;
     }
-    if (request.getArgs()[0] == "0") { // if user wants to leave all the channels
+    if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
                 this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
@@ -210,7 +210,7 @@ void Server::join(Request request, int user_id) {
 
     // parsing channels format: channel1,channel2,channel3
     std::vector<std::string> channels;
-    std::stringstream channels_stream(request.getArgs()[0]);
+    std::stringstream channels_stream(request.get_args()[0]);
     std::string channel;
     while (std::getline(channels_stream, channel, ',')) {
         channels.push_back(channel);
@@ -246,8 +246,8 @@ void Server::join(Request request, int user_id) {
 
     // parsing keys format: key1,key2
     std::vector<std::string> keys;
-    if (request.getArgs().size() > 1) {
-        std::stringstream keys_stream(request.getArgs()[1]);
+    if (request.get_args().size() > 1) {
+        std::stringstream keys_stream(request.get_args()[1]);
         std::string key;
         while (std::getline(keys_stream, key, ',')) {
             channels.push_back(key);
@@ -265,9 +265,9 @@ void Server::join(Request request, int user_id) {
         }
 
         bool is_channel_exists = false;
-        const std::string channel_name = toUppercase(channels[i]);
+        const std::string channel_name = to_uppercase(channels[i]);
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
-            if (toUppercase(this->_channels[i].get_name()) == channel_name){
+            if (to_uppercase(this->_channels[i].get_name()) == channel_name){
                 is_channel_exists = true;
                 try {
                     std::string key = "";
@@ -326,23 +326,23 @@ void Server::privmsg(Request request, int user_id){
         this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
         return;
     }
-    if (request.getArgs().size() < 1 ) {
+    if (request.get_args().size() < 1 ) {
         this->print_error_to_user(Error::ERR_NORECIPIENT, ":No recipient given. (PRIVMSG)\n", user_id);
         return;
-    } else if (request.getArgs().size() < 2 ) {
+    } else if (request.get_args().size() < 2 ) {
         this->print_error_to_user(Error::ERR_NOTEXTTOSEND, ":No text to send.\n", user_id);
         return;
     }
 
     // parsing targets in format: target1,target2
     std::vector<std::string> targets;
-    std::stringstream targets_stream(request.getArgs()[0]);
+    std::stringstream targets_stream(request.get_args()[0]);
     std::string target;
     while (std::getline(targets_stream, target, ',')) {
         targets.push_back(target);
     }
 
-    removeDuplicates(targets);
+    remove_duplicates(targets);
     for (size_t i = 0; i < targets.size(); i++) {
         if (targets[i].size() == 0){
             continue;
@@ -352,7 +352,7 @@ void Server::privmsg(Request request, int user_id){
             break;
         }
         try{
-            std::string msg = ":" + this->_users[user_id].get_nickname() + "!" + " PRIVMSG " + targets[i] + " :" + request.getArgs()[1] + "\n";
+            std::string msg = ":" + this->_users[user_id].get_nickname() + "!" + " PRIVMSG " + targets[i] + " :" + request.get_args()[1] + "\n";
             if (CHANNEL_PREFIX.find(targets[i][0]) != std::string::npos){
                 // we do not support prefixes as its not mandatory and also not supported from irc.libera.chat
                 this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
@@ -369,4 +369,25 @@ void Server::privmsg(Request request, int user_id){
             this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + ":Cannot send to nick/channel.\n", user_id);
         }
     }
+}
+
+void Server::mode(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 1 || request.get_args()[0] == "" ) { // we expect 1 - 2 args, if there are more we ignore them
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+        return;
+    }
+    std::string target_uppercase = to_uppercase(request.get_args()[0]);
+    if (target_uppercase == to_uppercase(this->_users[user_id].get_nickname())){
+        // we only support MODE command for channel, not users as its mentioned in task's description
+        this->print_error_to_user(Error::ERR_MODENOTFORCHANNEL, ":MODE comand is only supported for channels, not users.\n", user_id);
+        return;
+    } else if (this->does_user_exist(target_uppercase)){
+        this->print_error_to_user(Error::ERR_USERSDONTMATCH, ":Can't change mode for other users.\n", user_id);
+        return;
+    }
+    // handle user mode for channel
 }
