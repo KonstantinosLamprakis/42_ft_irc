@@ -73,7 +73,7 @@ void Server::nick(Request request, int user_id) {
     }
 
     // check for invalid characters: starting with digit, contain space or :, # or &
-    const std::string invalid_chars = ":#&!+" + SPACE;
+    const std::string invalid_chars = ":" + CHANNEL_MODE + SPACE;
     if (nickname.find_first_of(invalid_chars) != std::string::npos || std::isdigit(static_cast<unsigned char>(nickname[0]))){
         this->print_error_to_user(Error::ERR_ERRONEUSNICKNAME, nickname + " :Erroneous Nickname.\n", user_id);
         return;
@@ -139,7 +139,7 @@ void Server::user(Request request, int user_id) {
     const std::string realname = request.getArgs()[3]; // we ignore the 2nd and 3rd args, hostname and servername
     
     // check for invalid characters: starting with digit, contain space or :, # or &
-    const std::string invalid_chars = ":#&!+" + SPACE;
+    const std::string invalid_chars = ":" + CHANNEL_MODE + SPACE;
     if (username.find_first_of(invalid_chars) != std::string::npos || std::isdigit(static_cast<unsigned char>(username[0]))){
         this->print_msg_to_user("Invalid username[~" + username + "].\n", user_id);
         this->close_connection(user_id);
@@ -203,6 +203,7 @@ void Server::join(Request request, int user_id) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
                 this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
             }
+            this->_users[user_id].remove_channel(this->_channels[i].get_name());
         }
         return;
     }
@@ -284,6 +285,7 @@ void Server::join(Request request, int user_id) {
                 break;
             }
         }
+        // TODO(KL) print a message on all users when someone joins and leave
 
         if (!is_channel_exists){
             std::string key = "";
@@ -294,5 +296,77 @@ void Server::join(Request request, int user_id) {
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
         }      
+    }
+}
+
+/**
+ * @brief sends a message to another user or to a channel
+ * 
+ * Edge cases:
+ * - channel doesn't exist -> error
+ * - user doesn't exist -> error
+ * - user is not in the channel -> error
+ * - user sends a message to himself -> works
+ * - user sends a message to multiple users -> works
+ * - user sends a message to multiple channels -> works
+ * - user sends message to more than MAX_TARGETS_ON_PRIVMSG -> error
+ * - user sends a message to a user not registered -> error
+ * - user has duplicates values on the targets -> send only once
+ * - when a user sends a message to a channel:
+ *   - user should be already in this channel, otherwise ->
+ *   - sender shouldn't get the message, all other user should get it
+ *   - user can use ~ to send message only to founder of the channel
+ *   - suer can use @ to send message only to operators of the channel
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::privmsg(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        return;
+    }
+    if (request.getArgs().size() < 1 ) {
+        this->print_error_to_user(Error::ERR_NORECIPIENT, ":No recipient given. (PRIVMSG)\n", user_id);
+        return;
+    } else if (request.getArgs().size() < 2 ) {
+        this->print_error_to_user(Error::ERR_NOTEXTTOSEND, ":No text to send.\n", user_id);
+        return;
+    }
+
+    // parsing targets in format: target1,target2
+    std::vector<std::string> targets;
+    std::stringstream targets_stream(request.getArgs()[0]);
+    std::string target;
+    while (std::getline(targets_stream, target, ',')) {
+        targets.push_back(target);
+    }
+
+    removeDuplicates(targets);
+    for (size_t i = 0; i < targets.size(); i++) {
+        if (targets[i].size() == 0){
+            continue;
+        }
+        if (i + 1 > MAX_TARGETS_ON_PRIVMSG){
+            this->print_error_to_user(Error::ERR_TOOMANYTARGETS, ":Too many targets.\n", user_id);
+            break;
+        }
+        try{
+            std::string msg = ":" + this->_users[user_id].get_nickname() + "!" + " PRIVMSG " + targets[i] + " :" + request.getArgs()[1] + "\n";
+            if (CHANNEL_PREFIX.find(targets[i][0]) != std::string::npos){
+                // we do not support prefixes as its not mandatory and also not supported from irc.libera.chat
+                this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
+            } else if (CHANNEL_MODE.find(targets[i][0]) != std::string::npos){
+                this->print_msg_to_channel(msg, targets[i], this->_users[user_id].get_nickname());
+            } else { 
+                this->print_msg_to_user_with_nickname(msg, targets[i]);
+            }
+        }catch (const ChannelNotFound &e) {
+            this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
+        } catch (const UserNotFound &e) {
+            this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
+        } catch (const UserNotInChannel &e) {
+            this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + ":Cannot send to nick/channel.\n", user_id);
+        }
     }
 }

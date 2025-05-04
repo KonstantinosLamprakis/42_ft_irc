@@ -25,3 +25,18 @@ const char* IncorrectKeyForChannel::what() const throw()
 	return ("The key that was provided is wrong.");
 }
 
+const char* ChannelNotFound::what() const throw()
+{
+	return ("Channel not found.");
+}
+
+const char* UserNotFound::what() const throw()
+{
+	return ("User not found.");
+}
+
+const char* UserNotInChannel::what() const throw()
+{
+	return ("User not in channel.");
+}
+

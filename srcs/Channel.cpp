@@ -73,6 +73,10 @@ bool Channel::remove_user(std::string user){
 	return (is_user_found);
 }
 
+std::vector<std::string> Channel::get_users() const{
+	return (this->_users); // returns by value, not a pointer, so caller can not modify the _users inside the class
+}
+
 std::string	Channel::get_topic() const{
 	return (this->_topic);
 }
@@ -83,4 +87,14 @@ void Channel::set_topic(std::string topic){
 
 std::string	Channel::get_name() const{
 	return (this->_name);
+}
+
+bool Channel::is_user_in_channel(const std::string nickname) const {
+	const std::string nickname_Uppercase = toUppercase(nickname);
+
+    for (unsigned long i = 0; i < this->_users.size(); i++) {
+		if (toUppercase(this->_users[i]) == nickname_Uppercase)
+			return (true);
+	}
+	return (false);
 }

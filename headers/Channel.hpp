@@ -4,8 +4,13 @@
 # include <string>
 # include <vector>
 # include "Exceptions.hpp"
+# include "Utils.hpp"
 
 # define MAX_USERS_PER_CHANNEL 3
+# define MAX_TARGETS_ON_PRIVMSG 7
+
+const std::string CHANNEL_MODE = "#&!+";
+const std::string CHANNEL_PREFIX = "~@&%+";
 
 class Channel{
 	private:
@@ -24,6 +29,8 @@ class Channel{
 
 	void 		add_user(std::string user, std::string key);
 	bool		remove_user(std::string user);
+	std::vector<std::string> get_users() const;
+	bool 		is_user_in_channel(const std::string nickname) const;
 
 	std::string	get_topic() const;
 	void		set_topic(std::string topic);

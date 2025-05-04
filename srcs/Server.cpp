@@ -70,6 +70,52 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
 }
 
 /**
+ * @brief prints a message to a user with a spesific nickname who should be registered
+ * 
+ * @param msg 
+ * @param nickname 
+ */
+void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickname){
+	std::string uppercase_nickname = toUppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (toUppercase(this->_users[i].get_nickname()) == uppercase_nickname){
+			if (!this->_users[i].is_registered()) continue;
+			print_msg_to_user(msg, i);
+			return;
+		}
+	}
+	throw UserNotFound();
+}
+
+/**
+ * @brief Prints message to all users of a channel except the sender
+ * 
+ * @param msg 
+ * @param channel 
+ * @param sender_nick 
+ */
+void Server::print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick){
+	std::string uppercase_channel = toUppercase(channel);
+	std::string uppercase_sender_nick = toUppercase(sender_nick);
+	for (unsigned long i = 0; i < this->_channels.size(); i++)
+	{
+		if (toUppercase(this->_channels[i].get_name()) == uppercase_channel){
+			if (!this->_channels[i].is_user_in_channel(sender_nick))
+				throw UserNotInChannel();
+			std::vector<std::string> channel_users = this->_channels[i].get_users();
+			for (unsigned long j = 0; j < channel_users.size(); j++)
+			{
+				if (toUppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
+				print_msg_to_user_with_nickname(msg, channel_users[i]);
+			}
+			return;
+		}
+	}	
+	throw ChannelNotFound();
+}
+
+/**
  * @brief prints error values to a spesific user
  * 
  * @param numeric numeric should be of type namespace Error in server
@@ -286,7 +332,7 @@ void Server::execute(Request request, int user_index){
 	else if (upperCaseCommand == Command::JOIN)
 		this->join(request, user_index);
 	else if (upperCaseCommand == Command::PRIVMSG)
-		std::cout << "TODO PRIVMSG" << std::endl;
+		this->privmsg(request, user_index);
 	else if (upperCaseCommand == Command::QUIT)
 		this->quit(request, user_index);
 	// operator's commands
