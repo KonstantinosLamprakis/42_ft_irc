@@ -8,7 +8,8 @@
 # include "Exceptions.hpp"
 # include "Utils.hpp"
 
-# define DEFAULT_MAX_USERS_PER_CHANNEL 3
+# define DEFAULT_MAX_USERS_PER_CHANNEL 3 // this can be bypassed with operator's mode +l command
+# define MAX_USERS_PER_CHANNEL 100 // this can NOT be bypassed even with operator's mode +l command
 # define MAX_TARGETS_ON_PRIVMSG 7
 
 const std::string CHANNEL_TYPE = "#&!+";

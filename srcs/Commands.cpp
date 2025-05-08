@@ -87,7 +87,7 @@ void Server::nick(Request request, int user_id) {
     if (this->_users[user_id].is_registered()) { // if user is already registered, we update his nickname and print a message
         const std::string old_nickname = this->_users[user_id].get_nickname();
         this->_users[user_id].set_nickname(nickname);
-        this->print_msg_to_user(":" + old_nickname + "! " + "NICK :" + nickname + "\n", user_id);
+        this->print_msg_to_user(":" + old_nickname + "!~" + this->_users[user_id].get_username() + " NICK :" + nickname + "\n", user_id);
     } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
         this->_users[user_id].set_nickname(nickname);
         if (this->_users[user_id].is_registered()) {
@@ -201,8 +201,7 @@ void Server::join(Request request, int user_id) {
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
-                // TODO(KL) should I dispaly the username?
-                this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
+                this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
             }
             this->_users[user_id].remove_channel(this->_channels[i].get_name());
         }
@@ -273,7 +272,7 @@ void Server::join(Request request, int user_id) {
             }
             this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
             this->_users[user_id].add_channel(channels[i]);
-            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
             return;
         }  
 
@@ -285,12 +284,16 @@ void Server::join(Request request, int user_id) {
             this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
             this->_users[user_id].add_channel(channels[i]);
         } catch (const MaxNumberOfUsersInChannel &e) {
-            this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + ":Cannot join channel (+l). Channel is full.\n", user_id);
+            this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
             this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
         }
-        // TODO(KL) handle the case of invite only channels
-        // TODO(KL) print message when new user joins the channel
+        /* TODO(KL)
+            - what if a user tries to join a channel which already is a member?
+            - make it work with multiple channels per user
+            - handle the case of invite only channels
+            - print message when new user joins the channel(and also when he leaves, mode changes etc.)
+        */
     }
 }
 
@@ -321,6 +324,12 @@ void Server::join(Request request, int user_id) {
  * - -o: add yourself -> ignored
  * - +o: add a user not in channel -> error
  * - +o: add a user who is already operator -> nothing 
+ * 
+ * - l: with extremely large number -> error 
+ * - l: with no-number -> error
+ * - l: with no argument -> error
+ * - l: with a number less than the current number of users -> works fine, no new users can added
+ * - l: with negative number / zero
  * 
  * @param request 
  * @param user_id 
@@ -356,7 +365,7 @@ void Server::privmsg(Request request, int user_id){
             break;
         }
         try{
-            std::string msg = ":" + this->_users[user_id].get_nickname() + "!" + " PRIVMSG " + targets[i] + " :" + request.get_args()[1] + "\n";
+            std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PRIVMSG " + targets[i] + " :" + request.get_args()[1] + "\n";
             if (CHANNEL_PREFIX.find(targets[i][0]) != std::string::npos){
                 // we do not support prefixes as its not mandatory and also not supported from irc.libera.chat
                 this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
@@ -421,7 +430,25 @@ void Server::mode(Request request, int user_id){
                 this->_channels[channel_index].remove_channel_mode(modestring[i]);
             }
         } else if (modestring[i] == 'l'){
-
+            if (is_add_mode){
+                if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
+                    this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+                    return;
+                }
+                const std::string max_users_for_channel_str = request.get_args()[next_arg++];
+                if (!is_number(max_users_for_channel_str) || max_users_for_channel_str.size() > MAX_USERS_PER_CHANNEL / 10){
+                    this->print_error_to_user(Error::ERR_INVALIDINPUT, " :Invalid input.\n", user_id);
+                    return;
+                }
+                const int max_users = std::stoi(max_users_for_channel_str);
+                if (max_users > MAX_USERS_PER_CHANNEL || max_users == 0){
+                    this->print_error_to_user(Error::ERR_INVALIDINPUT, " :Invalid input.\n", user_id);
+                    return;
+                }
+                this->_channels[channel_index].set_max_users(max_users);
+            } else {
+                this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
+            }
         } else if (modestring[i] == 'k'){
 
         } else if (modestring[i] == 'o'){
@@ -440,10 +467,10 @@ void Server::mode(Request request, int user_id){
             if (is_add_mode){
                 if (to_uppercase(this->_users[user_id].get_nickname()) == to_uppercase(new_operator)) return;
                 this->_channels[channel_index].add_operator(new_operator);
-                this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!" + " MODE " + target_channel + " +o " + new_operator + "\n", new_operator);
+                this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " MODE " + target_channel + " +o " + new_operator + "\n", new_operator);
             } else {
                 this->_channels[channel_index].remove_operator(new_operator);
-                this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!" + " MODE " + target_channel + " -o " + new_operator + "\n", new_operator);
+                this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " MODE " + target_channel + " -o " + new_operator + "\n", new_operator);
             }
         } else {
             std::string mode = "";
