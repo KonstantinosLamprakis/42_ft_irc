@@ -106,7 +106,7 @@ void Server::print_msg_to_channel(std::string msg, std::string channel, std::str
 	for (unsigned long j = 0; j < channel_users.size(); j++)
 	{
 		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
-		print_msg_to_user_with_nickname(msg, channel_users[channel_index]);
+		print_msg_to_user_with_nickname(msg, channel_users[j]);
 	}
 	return;
 }

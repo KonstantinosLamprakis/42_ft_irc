@@ -267,7 +267,7 @@ void Server::join(Request request, int user_id) {
         int channel_index = this->get_channel_index(channels[i]);
         if (channel_index == -1){
             std::string key = "";
-            if (keys.size() > i + 1) {
+            if (keys.size() >= i + 1) {
                 key = keys[i];
             }
             this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
@@ -278,7 +278,7 @@ void Server::join(Request request, int user_id) {
 
         try {
             std::string key = "";
-            if (keys.size() > i + 1) {
+            if (keys.size() >= i + 1) {
                 key = keys[i];
             }
             this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
