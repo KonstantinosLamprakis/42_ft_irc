@@ -75,7 +75,7 @@ void	Server::print_msg_to_user(std::string msg, int user_index){
  * @param msg 
  * @param nickname 
  */
-void	Server::print_msg_to_user_with_nickname(std::string msg, std::string nickname){
+void Server::print_msg_to_user_with_nickname(std::string msg, std::string nickname){
 	std::string uppercase_nickname = to_uppercase(nickname);
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{

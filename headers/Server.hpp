@@ -74,6 +74,9 @@ namespace Error {
 	const std::string ERR_TOOMANYTARGETS = "997";
 	const std::string ERR_USERSDONTMATCH = "502";
 	const std::string ERR_MODENOTFORCHANNEL = "996";
+	const std::string ERR_CHANOPRIVSNEEDED = "482";
+	const std::string ERR_UNKNOWNMODE = "472";
+	const std::string ERR_USERNOTINCHANNEL = "441";
 }
 
 class Server
