@@ -150,3 +150,7 @@ bool Channel::remove_operator(std::string user){
 	}
 	return (is_user_found);
 }
+
+void Channel::set_key(std::string key){
+	this->_key = key;
+}

@@ -77,7 +77,8 @@ namespace Error {
 	const std::string ERR_CHANOPRIVSNEEDED = "482";
 	const std::string ERR_UNKNOWNMODE = "472";
 	const std::string ERR_USERNOTINCHANNEL = "441";
-	const std::string ERR_INVALIDINPUT = "995";
+	const std::string ERR_INVALIDMODEPARAM = "696";
+	const std::string ERR_INVALIDKEY = "525";
 }
 
 class Server

@@ -39,6 +39,7 @@ class Channel{
 	bool		remove_user(std::string user);
 	void		set_topic(std::string topic);
 	void 		set_max_users(unsigned int max_users);
+	void 		set_key(std::string key);
 
 	// getters
 	std::string	get_modes();

@@ -18,15 +18,15 @@
  */
 void Server::pass(Request request, int user_id) {
     if (this->_users[user_id].is_authenticated()) {
-        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, ":User is already registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, " :User is already registered.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 || request.get_args()[0] == "") { // if more than 1, server only use the 1rst one
-        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Need more params.\n", user_id);
         return;
     }
     if (request.get_args()[0] != this->_password) {
-        this->print_error_to_user(Error::ERR_PASSWDMISMATCH, ":Password Incorrect.\n", user_id);
+        this->print_error_to_user(Error::ERR_PASSWDMISMATCH, " :Password Incorrect.\n", user_id);
         return;
     }
     this->_users[user_id].set_authenticated(true);
@@ -54,11 +54,11 @@ void Server::pass(Request request, int user_id) {
  */
 void Server::nick(Request request, int user_id) {
     if (!this->_users[user_id].is_authenticated()) {
-        this->print_error_to_user(Error::ERR_NOAUTHENTICATION, ":You need to authenticate first.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOAUTHENTICATION, " :You need to authenticate first.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 || request.get_args()[0] == "") { // if more than 1, server only use the 1rst one
-        this->print_error_to_user(Error::ERR_NONICKNAMEGIVEN, ":No nickname given.\n", user_id);
+        this->print_error_to_user(Error::ERR_NONICKNAMEGIVEN, " :No nickname given.\n", user_id);
         return;
     }
 
@@ -117,20 +117,20 @@ void Server::nick(Request request, int user_id) {
  */
 void Server::user(Request request, int user_id) {
     if (this->_users[user_id].is_registered()) {
-        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, ":You are already registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, " :You are already registered.\n", user_id);
         return;
     }
     if (!this->_users[user_id].is_authenticated()) {
-        this->print_error_to_user(Error::ERR_NOAUTHENTICATION, ":You need to authenticate first.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOAUTHENTICATION, " :You need to authenticate first.\n", user_id);
         return;
     }
     if (request.get_args().size() < 4) { // if more than 1, server only use the 1rst one
-        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Need more params.\n", user_id);
         return;
     }
     for (int i = 0; i < 4; i++) { // no param can be empty
         if (request.get_args()[i] == "") {
-            this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Need more params.\n", user_id);
+            this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Need more params.\n", user_id);
             return;
         }
     }
@@ -191,11 +191,11 @@ void Server::quit(Request request, int user_id) {
  */
 void Server::join(Request request, int user_id) {
     if (!this->_users[user_id].is_registered()) {
-        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 ) { // we expect 1 - 2 args, if there are more we ignore them
-        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
@@ -250,7 +250,7 @@ void Server::join(Request request, int user_id) {
         std::stringstream keys_stream(request.get_args()[1]);
         std::string key;
         while (std::getline(keys_stream, key, ',')) {
-            channels.push_back(key);
+            keys.push_back(key);
         }
     }
 
@@ -331,19 +331,22 @@ void Server::join(Request request, int user_id) {
  * - l: with a number less than the current number of users -> works fine, no new users can added
  * - l: with negative number / zero
  * 
+ * - k: with no argument or empty string -> error
+ * - k: with space as argument -> error 
+ * 
  * @param request 
  * @param user_id 
  */
 void Server::privmsg(Request request, int user_id){
     if (!this->_users[user_id].is_registered()) {
-        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 ) {
-        this->print_error_to_user(Error::ERR_NORECIPIENT, ":No recipient given. (PRIVMSG)\n", user_id);
+        this->print_error_to_user(Error::ERR_NORECIPIENT, " :No recipient given. (PRIVMSG)\n", user_id);
         return;
     } else if (request.get_args().size() < 2 ) {
-        this->print_error_to_user(Error::ERR_NOTEXTTOSEND, ":No text to send.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOTEXTTOSEND, " :No text to send.\n", user_id);
         return;
     }
 
@@ -361,7 +364,7 @@ void Server::privmsg(Request request, int user_id){
             continue;
         }
         if (i + 1 > MAX_TARGETS_ON_PRIVMSG){
-            this->print_error_to_user(Error::ERR_TOOMANYTARGETS, ":Too many targets.\n", user_id);
+            this->print_error_to_user(Error::ERR_TOOMANYTARGETS, " :Too many targets.\n", user_id);
             break;
         }
         try{
@@ -379,27 +382,27 @@ void Server::privmsg(Request request, int user_id){
         } catch (const UserNotFound &e) {
             this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
         } catch (const UserNotInChannel &e) {
-            this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + ":Cannot send to nick/channel.\n", user_id);
+            this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + " :Cannot send to nick/channel.\n", user_id);
         }
     }
 }
 
 void Server::mode(Request request, int user_id){
     if (!this->_users[user_id].is_registered()) {
-        this->print_error_to_user(Error::ERR_NOTREGISTERED, ":You have not registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 || request.get_args()[0] == "" ) { // we expect 1 - 2 args, if there are more we ignore them
-        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
     std::string target_channel = request.get_args()[0];
     if (to_uppercase(target_channel) == to_uppercase(this->_users[user_id].get_nickname())){
         // we only support MODE command for channel, not users as its mentioned in task's description
-        this->print_error_to_user(Error::ERR_MODENOTFORCHANNEL, ":MODE comand is only supported for channels, not users.\n", user_id);
+        this->print_error_to_user(Error::ERR_MODENOTFORCHANNEL, " :MODE comand is only supported for channels, not users.\n", user_id);
         return;
     } else if (this->does_user_exist(target_channel)){
-        this->print_error_to_user(Error::ERR_USERSDONTMATCH, ":Can't change mode for other users.\n", user_id);
+        this->print_error_to_user(Error::ERR_USERSDONTMATCH, " :Can't change mode for other users.\n", user_id);
         return;
     }
     // handle user mode for channel
@@ -420,7 +423,7 @@ void Server::mode(Request request, int user_id){
     std::string modestring = request.get_args()[1];
     unsigned long next_arg = 2;
     unsigned long i = 0;
-    bool is_add_mode = modestring[i] == '+';
+    bool is_add_mode = modestring[i] != '-';
     if (modestring[i] == '-' || modestring[i] == '+') i++;
     while(i < modestring.size()){ // does this works like +oilk?
         if (modestring[i] == 'i' || modestring[i] == 't'){
@@ -432,17 +435,17 @@ void Server::mode(Request request, int user_id){
         } else if (modestring[i] == 'l'){
             if (is_add_mode){
                 if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
-                    this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+                    this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
                     return;
                 }
                 const std::string max_users_for_channel_str = request.get_args()[next_arg++];
                 if (!is_number(max_users_for_channel_str) || max_users_for_channel_str.size() > MAX_USERS_PER_CHANNEL / 10){
-                    this->print_error_to_user(Error::ERR_INVALIDINPUT, " :Invalid input.\n", user_id);
+                    this->print_error_to_user(Error::ERR_INVALIDMODEPARAM, target_channel + " l :Invalid input. Should be a reasonable number.\n", user_id);
                     return;
                 }
                 const int max_users = std::stoi(max_users_for_channel_str);
                 if (max_users > MAX_USERS_PER_CHANNEL || max_users == 0){
-                    this->print_error_to_user(Error::ERR_INVALIDINPUT, " :Invalid input.\n", user_id);
+                    this->print_error_to_user(Error::ERR_INVALIDMODEPARAM, target_channel + " l :Invalid input. Should be a reasonable number\n", user_id);
                     return;
                 }
                 this->_channels[channel_index].set_max_users(max_users);
@@ -450,10 +453,23 @@ void Server::mode(Request request, int user_id){
                 this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
             }
         } else if (modestring[i] == 'k'){
-
+            if (is_add_mode){
+                if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
+                    this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+                    return;
+                }
+                const std::string new_key = request.get_args()[next_arg++];
+                if (new_key.find_first_of(SPACE) != std::string::npos){
+                    this->print_error_to_user(Error::ERR_INVALIDKEY, target_channel + " :Key is not well-formed.\n", user_id);
+                    return;
+                }
+                this->_channels[channel_index].set_key(new_key);
+            }else {
+                this->_channels[channel_index].set_key("");
+            }
         } else if (modestring[i] == 'o'){
             if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
-                this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, ":Not enough parameters.\n", user_id);
+                this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
                 return;
             }
             const std::string new_operator = request.get_args()[next_arg++];
