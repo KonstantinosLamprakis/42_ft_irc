@@ -361,16 +361,16 @@ void Server::execute(Request request, int user_index){
 	else if (uppercase_command == Command::JOIN)
 		this->join(request, user_index);
 	else if (uppercase_command == Command::PRIVMSG)
-		this->privmsg(request, user_index);
+		this->privmsg(request, user_index, false);
 	else if (uppercase_command == Command::NOTICE)
-		std::cout << "TODO NOTICE" << std::endl;
+		this->privmsg(request, user_index, true);
 	else if (uppercase_command == Command::QUIT)
 		this->quit(request, user_index);
 	// operator's commands
 	else if (uppercase_command == Command::KICK)
 		this->kick(request, user_index);
 	else if (uppercase_command == Command::INVITE)
-		std::cout << "TODO INVITE" << std::endl;
+		this->invite(request, user_index);
 	else if (uppercase_command == Command::TOPIC)
 		this->topic(request, user_index);
 	else if (uppercase_command == Command::MODE)

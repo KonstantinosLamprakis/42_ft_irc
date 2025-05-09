@@ -129,10 +129,11 @@ class Server
 		void		user(Request request, int user_index);
 		void		quit(Request request, int user_index);
 		void		join(Request request, int user_index);
-		void		privmsg(Request request, int user_index);
+		void		privmsg(Request request, int user_index, bool is_notice);
 		void		mode(Request request, int user_index);
 		void		topic(Request request, int user_index);
 		void		kick(Request request, int user_index);
+		void		invite(Request request, int user_index);
 };
 
 #endif

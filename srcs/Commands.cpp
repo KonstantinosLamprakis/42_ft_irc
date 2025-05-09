@@ -320,11 +320,12 @@ void Server::join(Request request, int user_id) {
  * @param request 
  * @param user_id 
  */
-void Server::privmsg(Request request, int user_id){
+void Server::privmsg(Request request, int user_id, bool is_notice){
     if (!this->_users[user_id].is_registered()) {
         this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
         return;
     }
+    if (is_notice && request.get_args().size() < 2) return; // NOTICE doesn't produce any error
     if (request.get_args().size() < 1 ) {
         this->print_error_to_user(Error::ERR_NORECIPIENT, " :No recipient given. (PRIVMSG)\n", user_id);
         return;
@@ -351,8 +352,11 @@ void Server::privmsg(Request request, int user_id){
             break;
         }
         try{
-            std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PRIVMSG " + targets[i] + " :" + request.get_args()[1] + "\n";
+            std::string command = "PRIVMSG";
+            if (is_notice) command = "NOTICE";
+            std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " " + command + " " + targets[i] + " :" + request.get_args()[1] + "\n";
             if (CHANNEL_PREFIX.find(targets[i][0]) != std::string::npos){
+                if (is_notice) continue; // NOTICE doesn't produce any error
                 // we do not support prefixes as its not mandatory and also not supported from irc.libera.chat
                 this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
             } else if (CHANNEL_TYPE.find(targets[i][0]) != std::string::npos){
@@ -361,10 +365,13 @@ void Server::privmsg(Request request, int user_id){
                 this->print_msg_to_user_with_nickname(msg, targets[i]);
             }
         }catch (const ChannelNotFound &e) {
+            if (is_notice) continue; // NOTICE doesn't produce any error
             this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
         } catch (const UserNotFound &e) {
+            if (is_notice) continue; // NOTICE doesn't produce any error
             this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
         } catch (const UserNotInChannel &e) {
+            // apparently this is the only error that NOTICE seems to return
             this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + " :Cannot send to nick/channel.\n", user_id);
         }
     }
@@ -623,4 +630,15 @@ void Server::kick(Request request, int user_id){
         this->print_msg_to_user_with_nickname(msg, target_user);
         this->_channels[channel_index].remove_user(target_user);
     }
+}
+
+/**
+ * @brief TODO(KL)
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::invite(Request request, int user_id){
+    if (request.getCommand() == "" || user_id == 1) return;
+    // TODO(KL)
 }
