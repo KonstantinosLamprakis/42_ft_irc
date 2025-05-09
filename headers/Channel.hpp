@@ -8,10 +8,11 @@
 # include "Exceptions.hpp"
 # include "Utils.hpp"
 
-# define MAX_USERS_PER_CHANNEL 3
+# define DEFAULT_MAX_USERS_PER_CHANNEL 3 // this can be bypassed with operator's mode +l command
+# define MAX_USERS_PER_CHANNEL 100 // this can NOT be bypassed even with operator's mode +l command
 # define MAX_TARGETS_ON_PRIVMSG 7
 
-const std::string CHANNEL_MODE = "#&!+";
+const std::string CHANNEL_TYPE = "#&!+";
 const std::string CHANNEL_PREFIX = "~@&%+";
 
 class Channel{
@@ -23,22 +24,29 @@ class Channel{
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
 		std::time_t 			_creation_timestamp;
+		unsigned int			_max_users;
 
 	public:
 	Channel(std::string name, std::string key, std::string creator);
 
+	
+	// setters
 	void		add_channel_mode(char c);
-	void		remove_channel_mode(char c);
-	std::string	get_modes();
-
+	void		remove_channel_mode(char c);	
 	void 		add_user(std::string user, std::string key);
+	void 		add_operator(std::string user);
+	bool 		remove_operator(std::string user);
 	bool		remove_user(std::string user);
+	void		set_topic(std::string topic);
+	void 		set_max_users(unsigned int max_users);
+	void 		set_key(std::string key);
+
+	// getters
+	std::string	get_modes();
 	std::vector<std::string> get_users() const;
 	bool 		is_user_in_channel(const std::string nickname) const;
-
+	bool 		is_user_operator(const std::string nickname) const;
 	std::string	get_topic() const;
-	void		set_topic(std::string topic);
-
 	std::string	get_name() const;
 	std::string get_creation_timestamp() const;
 };

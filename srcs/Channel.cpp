@@ -8,11 +8,12 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 	this->_operators.push_back(creator);
 	this->_topic = "";
 	this->_creation_timestamp = std::time(nullptr);
+	this->_max_users = DEFAULT_MAX_USERS_PER_CHANNEL;
 }
 
 void Channel::add_channel_mode(char c)
 {
-	for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+	for (unsigned long n = 0; n < this->_channel_modes.size(); n++)
 	{
 		if (this->_channel_modes[n] == c)
 			return ;
@@ -22,18 +23,18 @@ void Channel::add_channel_mode(char c)
 
 void Channel::remove_channel_mode(char c)
 {
-	for (unsigned long n = 0; n < sizeof(this->_channel_modes); n++)
+	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
-		if (this->_channel_modes[n] == c)
+		if (this->_channel_modes[i] == c)
 		{
-			this->_channel_modes.erase(this->_channel_modes.begin() + n);
+			this->_channel_modes.erase(this->_channel_modes.begin() + i);
 			return ;
 		}
 	}
 }
 
 void Channel::add_user(std::string user, std::string key){
-	if (this->_users.size() >= MAX_USERS_PER_CHANNEL)
+	if (this->_users.size() >= this->_max_users)
 		throw MaxNumberOfUsersInChannel();
 
 	if (this->_key != "" && this->_key != key){
@@ -100,14 +101,56 @@ bool Channel::is_user_in_channel(const std::string nickname) const {
 	return (false);
 }
 
+bool Channel::is_user_operator(const std::string nickname) const {
+	const std::string nickname_Uppercase = to_uppercase(nickname);
+
+    for (unsigned long i = 0; i < this->_operators.size(); i++) {
+		if (to_uppercase(this->_operators[i]) == nickname_Uppercase)
+			return (true);
+	}
+	return (false);
+}
+
 std::string	Channel::get_modes(){
 	if (this->_channel_modes.empty())
 		return ("");
 
 	std::string result(this->_channel_modes.begin(), this->_channel_modes.end());
-	return (result);
+	return ("+" + result);
 }
 
 std::string Channel::get_creation_timestamp() const {
 	return (std::to_string(this->_creation_timestamp));
+}
+
+void Channel::set_max_users(unsigned int max_users){
+	this->_max_users = max_users;
+}
+
+void Channel::add_operator(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_operators.size(); i++)
+	{
+		if (to_uppercase(this->_operators[i]) == user_uppercase){
+			return;
+		}
+	}
+	this->_operators.push_back(user);
+}
+
+bool Channel::remove_operator(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	bool is_user_found = false;
+	for (unsigned long i = 0; i < this->_operators.size(); i++)
+	{
+		if (to_uppercase(this->_operators[i]) == user_uppercase){
+			this->_operators.erase(this->_operators.begin() + i);
+			break;
+		}
+	}
+	return (is_user_found);
+}
+
+void Channel::set_key(std::string key){
+	this->_key = key;
 }

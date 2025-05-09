@@ -17,3 +17,14 @@ void remove_duplicates(std::vector<std::string> &vec){
         }
     }
 }
+
+bool is_number(const std::string str) {
+    if (str.empty()) return false;
+
+    for (std::size_t i = 0; i < str.length(); i++) {
+        if (!std::isdigit(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}

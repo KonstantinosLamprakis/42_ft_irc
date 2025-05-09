@@ -10,7 +10,7 @@
 const std::string SPACE = "\t\n ";
 
 std::string to_uppercase(const std::string &str);
-
 void remove_duplicates(std::vector<std::string> &vec);
+bool is_number(const std::string str);
 
 #endif

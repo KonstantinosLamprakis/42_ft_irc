@@ -25,7 +25,7 @@
 # define BACKLOG 10
 # define MAX_CONNECTIONS 1024 
 # define BUFFER_SIZE 512
-# define CHANNEL_PER_USER_LIMIT 1
+# define CHANNEL_PER_USER_LIMIT 5
 
 const std::string SERVER_NAME = "42_IRC";
 class User;
@@ -74,6 +74,11 @@ namespace Error {
 	const std::string ERR_TOOMANYTARGETS = "997";
 	const std::string ERR_USERSDONTMATCH = "502";
 	const std::string ERR_MODENOTFORCHANNEL = "996";
+	const std::string ERR_CHANOPRIVSNEEDED = "482";
+	const std::string ERR_UNKNOWNMODE = "472";
+	const std::string ERR_USERNOTINCHANNEL = "441";
+	const std::string ERR_INVALIDMODEPARAM = "696";
+	const std::string ERR_INVALIDKEY = "525";
 }
 
 class Server
