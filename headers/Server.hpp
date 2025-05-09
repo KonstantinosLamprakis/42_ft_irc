@@ -132,6 +132,7 @@ class Server
 		void		privmsg(Request request, int user_index);
 		void		mode(Request request, int user_index);
 		void		topic(Request request, int user_index);
+		void		kick(Request request, int user_index);
 };
 
 #endif

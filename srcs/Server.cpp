@@ -368,7 +368,7 @@ void Server::execute(Request request, int user_index){
 		this->quit(request, user_index);
 	// operator's commands
 	else if (uppercase_command == Command::KICK)
-		std::cout << "TODO KICK" << std::endl;
+		this->kick(request, user_index);
 	else if (uppercase_command == Command::INVITE)
 		std::cout << "TODO INVITE" << std::endl;
 	else if (uppercase_command == Command::TOPIC)

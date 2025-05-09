@@ -564,3 +564,63 @@ void Server::topic(Request request, int user_id){
     this->print_reply_to_channel(RPL::RPL_TOPIC, "TOPIC " + target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", this->_channels[channel_index].get_name());
     return;
 }
+
+/**
+ * @brief TODO(KL) add edge cases e.g. extremely big comment etc.
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::kick(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 2 || request.get_args()[1] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    std::string target_channel = request.get_args()[0];
+    int channel_index = this->get_channel_index(target_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, target_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, target_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    if (this->_channels[channel_index].get_modes().find_first_of('t') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
+        return;
+    }
+    // parsing target_users format: user1,user2
+    std::vector<std::string> target_users;
+    if (request.get_args().size() > 1) {
+        std::stringstream target_users_stream(request.get_args()[1]);
+        std::string user;
+        while (std::getline(target_users_stream, user, ',')) {
+            target_users.push_back(user);
+        }
+    }
+
+    std::string comment = DEFAULT_KICK_COMMENT;
+    if (request.get_args().size() > 3 && request.get_args()[2] != "")
+        comment = request.get_args()[2];
+
+    for (unsigned long i = 0; i < target_users.size(); i++) {
+        const std::string target_user = target_users[i];
+        if (!this->does_user_exist(target_user)){
+            this->print_error_to_user(Error::ERR_NOSUCHNICK, target_user + " :No such nick/channel.\n", user_id);
+            return;
+        }
+        if (!this->_channels[channel_index].is_user_in_channel(target_user)){
+            this->print_error_to_user(Error::ERR_USERNOTINCHANNEL, target_user + " " + target_channel + " :They aren't on that channel.\n", user_id);
+            return;
+        }
+        std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " KICK " + target_channel + " " + target_user + " :" + comment + "\n";
+        this->print_msg_to_channel(msg, target_channel, target_user);
+        this->print_msg_to_user_with_nickname(msg, target_user);
+        this->_channels[channel_index].remove_user(target_user);
+    }
+}
