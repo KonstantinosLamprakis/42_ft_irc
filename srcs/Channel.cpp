@@ -7,15 +7,17 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 	this->_users.push_back(creator);
 	this->_operators.push_back(creator);
 	this->_topic = "";
+	this->_topic_modification_timestamp = 0;
+	this->_topic_creator = "";
 	this->_creation_timestamp = std::time(nullptr);
 	this->_max_users = DEFAULT_MAX_USERS_PER_CHANNEL;
 }
 
 void Channel::add_channel_mode(char c)
 {
-	for (unsigned long n = 0; n < this->_channel_modes.size(); n++)
+	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
-		if (this->_channel_modes[n] == c)
+		if (this->_channel_modes[i] == c)
 			return ;
 	}
 	this->_channel_modes.push_back(c);
@@ -83,8 +85,21 @@ std::string	Channel::get_topic() const{
 	return (this->_topic);
 }
 
-void Channel::set_topic(std::string topic){
+void Channel::clear_topic(){
+	this->_topic = "";
+	this->_topic_modification_timestamp = 0;
+	this->_topic_creator = "";
+}
+
+void Channel::set_topic(std::string topic, std::string creator){
+	this->_topic_modification_timestamp = std::time(nullptr);
+	this->_topic_creator = creator;
 	this->_topic = topic;
+}
+
+std::string	Channel::get_topic_info() const{
+	if (this->_topic.empty()) return ("");
+	return (this->_topic_creator + " " + std::to_string(this->_topic_modification_timestamp));
 }
 
 std::string	Channel::get_name() const{

@@ -316,24 +316,6 @@ void Server::join(Request request, int user_id) {
  *   - user can use ~ to send message only to founder of the channel
  *   - suer can use @ to send message only to operators of the channel
  * 
- * modes:
- * - -o: remove a user not in channel -> nothing
- * - -o: remove a user who doesn't exists -> nothing
- * - -o: remove a user who is on channgel but not operator -> normal execution
- * - -o: remove yourself -> done(even if no other operator exists)
- * - -o: add yourself -> ignored
- * - +o: add a user not in channel -> error
- * - +o: add a user who is already operator -> nothing 
- * 
- * - l: with extremely large number -> error 
- * - l: with no-number -> error
- * - l: with no argument -> error
- * - l: with a number less than the current number of users -> works fine, no new users can added
- * - l: with negative number / zero
- * 
- * - k: with no argument or empty string -> error
- * - k: with space as argument -> error 
- * 
  * @param request 
  * @param user_id 
  */
@@ -387,6 +369,33 @@ void Server::privmsg(Request request, int user_id){
     }
 }
 
+/**
+ * @brief 
+ * 
+ *  Edge cases:
+ * 
+ * - sending a mode with +, - and with none of them
+ * - sending multiple modes like +kli TODO(KL)
+ * - -o: remove a user not in channel -> nothing
+ * - -o: remove a user who doesn't exists -> nothing
+ * - -o: remove a user who is on channgel but not operator -> normal execution
+ * - -o: remove yourself -> done(even if no other operator exists)
+ * - -o: add yourself -> ignored
+ * - +o: add a user not in channel -> error
+ * - +o: add a user who is already operator -> nothing 
+ * 
+ * - l: with extremely large number -> error 
+ * - l: with no-number -> error
+ * - l: with no argument -> error
+ * - l: with a number less than the current number of users -> works fine, no new users can added
+ * - l: with negative number / zero
+ * 
+ * - k: with no argument or empty string -> error
+ * - k: with space as argument -> error 
+ * 
+ * @param request 
+ * @param user_id 
+ */
 void Server::mode(Request request, int user_id){
     if (!this->_users[user_id].is_registered()) {
         this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
@@ -415,7 +424,7 @@ void Server::mode(Request request, int user_id){
         this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
         return;
     }
-    if (request.get_args().size() == 1 || request.get_args()[1] == ""){
+    if (request.get_args().size() <= 1 || request.get_args()[1] == ""){
         this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes() + "\n", user_id);
         this->print_reply_to_user(RPL::RPL_CREATIONTIME, target_channel + " " + this->_channels[channel_index].get_creation_timestamp() + "\n", user_id);
         return;
@@ -425,8 +434,8 @@ void Server::mode(Request request, int user_id){
     unsigned long i = 0;
     bool is_add_mode = modestring[i] != '-';
     if (modestring[i] == '-' || modestring[i] == '+') i++;
-    while(i < modestring.size()){ // does this works like +oilk?
-        if (modestring[i] == 'i' || modestring[i] == 't'){
+    while(i < modestring.size()){ // TODO(KL) impelemnt i and t
+        if (modestring[i] == 'i' || modestring[i] == 't'){ 
             if (is_add_mode){
                 this->_channels[channel_index].add_channel_mode(modestring[i]);
             } else {
@@ -497,4 +506,56 @@ void Server::mode(Request request, int user_id){
         i++;
     }
     // TODO(KL) if not error print all new modes to all users and modify the get mode to get args as well
+}
+
+/**
+ * @brief 
+ * 
+ * Edge cases:
+ * - huge topic (TODO(KL)) + needs more testing
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::topic(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 1 || request.get_args()[0] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    std::string target_channel = request.get_args()[0];
+    int channel_index = this->get_channel_index(target_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, target_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, target_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    // get existed topic
+    if (request.get_args().size() == 1){
+        const std::string topic = this->_channels[channel_index].get_topic();
+        if (topic == ""){ // just return topic
+            this->print_reply_to_user(RPL::RPL_NOTOPIC, target_channel + " :No topic is set\n", user_id);
+        }else {
+            this->print_reply_to_user(RPL::RPL_TOPIC, target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, target_channel + " " + this->_channels[channel_index].get_topic_info() + "\n", user_id);
+        }
+        return;
+    }
+    // assign new topic
+    if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
+        return;
+    }
+    if (request.get_args()[1] == "")
+        this->_channels[channel_index].clear_topic();
+    else
+        this->_channels[channel_index].set_topic(request.get_args()[1], this->_users[user_id].get_nickname());
+    this->print_reply_to_channel(RPL::RPL_TOPIC, "TOPIC " + target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", this->_channels[channel_index].get_name());
+    return;
 }

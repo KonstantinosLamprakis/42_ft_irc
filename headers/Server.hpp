@@ -37,6 +37,7 @@ namespace Command {
 	const std::string USER = "USER";
 	const std::string JOIN = "JOIN";
 	const std::string PRIVMSG = "PRIVMSG";
+	const std::string NOTICE = "NOTICE";
 	const std::string QUIT = "QUIT";
 	// Operator's commands
 	const std::string KICK = "KICK";
@@ -49,6 +50,9 @@ namespace Command {
 namespace RPL {
 	const std::string RPL_CHANNELMODEIS = "324";
 	const std::string RPL_CREATIONTIME = "329";
+	const std::string RPL_NOTOPIC = "331";
+	const std::string RPL_TOPIC = "332";
+	const std::string RPL_TOPICWHOTIME = "333";	
 }
 
 // errors starting with 9 are custom
@@ -79,6 +83,7 @@ namespace Error {
 	const std::string ERR_USERNOTINCHANNEL = "441";
 	const std::string ERR_INVALIDMODEPARAM = "696";
 	const std::string ERR_INVALIDKEY = "525";
+	const std::string ERR_NOTONCHANNEL = "442";
 }
 
 class Server
@@ -114,6 +119,7 @@ class Server
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		void		print_reply_to_user(std::string numeric, std::string msg, int user_index);
 		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
+		void 		print_reply_to_channel(std::string numeric, std::string msg, std::string channel);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);
 
@@ -125,6 +131,7 @@ class Server
 		void		join(Request request, int user_index);
 		void		privmsg(Request request, int user_index);
 		void		mode(Request request, int user_index);
+		void		topic(Request request, int user_index);
 };
 
 #endif
