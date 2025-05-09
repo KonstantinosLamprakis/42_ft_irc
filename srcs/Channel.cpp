@@ -134,6 +134,17 @@ std::string	Channel::get_modes(){
 	return ("+" + result);
 }
 
+std::string	Channel::get_modes_with_values(){
+	std::string modes = this->get_modes();
+	std::string values = "";
+	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
+	{
+		if (this->_channel_modes[i] == 'k') values += " " + this->_key;
+		if (this->_channel_modes[i] == 'l') values += " " + std::to_string(this->_max_users);
+	}
+	return (modes + values);
+}
+
 std::string Channel::get_creation_timestamp() const {
 	return (std::to_string(this->_creation_timestamp));
 }

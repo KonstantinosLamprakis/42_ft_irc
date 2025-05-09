@@ -46,6 +46,7 @@ class Channel{
 
 	// getters
 	std::string	get_modes();
+	std::string	get_modes_with_values();
 	std::vector<std::string> get_users() const;
 	bool 		is_user_in_channel(const std::string nickname) const;
 	bool 		is_user_operator(const std::string nickname) const;

@@ -198,6 +198,7 @@ void Server::join(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
+    // TODO(KL) delete a channel as soon as it is empty
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
@@ -425,7 +426,7 @@ void Server::mode(Request request, int user_id){
         return;
     }
     if (request.get_args().size() <= 1 || request.get_args()[1] == ""){
-        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes() + "\n", user_id);
+        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes_with_values() + "\n", user_id);
         this->print_reply_to_user(RPL::RPL_CREATIONTIME, target_channel + " " + this->_channels[channel_index].get_creation_timestamp() + "\n", user_id);
         return;
     }
@@ -458,8 +459,10 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_max_users(max_users);
+                this->_channels[channel_index].add_channel_mode(modestring[i]);
             } else {
                 this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
+                this->_channels[channel_index].remove_channel_mode(modestring[i]);
             }
         } else if (modestring[i] == 'k'){
             if (is_add_mode){
@@ -473,8 +476,10 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_key(new_key);
+                this->_channels[channel_index].add_channel_mode(modestring[i]);
             }else {
                 this->_channels[channel_index].set_key("");
+                this->_channels[channel_index].remove_channel_mode(modestring[i]);
             }
         } else if (modestring[i] == 'o'){
             if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
@@ -548,7 +553,7 @@ void Server::topic(Request request, int user_id){
         return;
     }
     // assign new topic
-    if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+    if (this->_channels[channel_index].get_modes().find_first_of('t') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
         this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
         return;
     }
