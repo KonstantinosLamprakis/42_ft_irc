@@ -140,6 +140,17 @@ void Server::print_reply_to_user(std::string numeric, std::string msg, int user_
 		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
 }
 
+void Server::print_reply_to_channel(std::string numeric, std::string msg, std::string channel){
+	int channel_index = this->get_channel_index(channel);
+	if (channel_index == -1)
+		throw ChannelNotFound();
+	std::vector<std::string> channel_users = this->_channels[channel_index].get_users();
+	for (unsigned long j = 0; j < channel_users.size(); j++){
+		std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + channel_users[j] + " " + msg + "\n";
+		print_msg_to_user_with_nickname(final_msg, channel_users[j]);
+	}
+}
+
 void Server::close_connection(int user_index){
 	close (this->_connection_fds[user_index].fd);
 	this->_connection_fds.erase(_connection_fds.begin() + user_index);
@@ -350,16 +361,18 @@ void Server::execute(Request request, int user_index){
 	else if (uppercase_command == Command::JOIN)
 		this->join(request, user_index);
 	else if (uppercase_command == Command::PRIVMSG)
-		this->privmsg(request, user_index);
+		this->privmsg(request, user_index, false);
+	else if (uppercase_command == Command::NOTICE)
+		this->privmsg(request, user_index, true);
 	else if (uppercase_command == Command::QUIT)
 		this->quit(request, user_index);
 	// operator's commands
 	else if (uppercase_command == Command::KICK)
-		std::cout << "TODO KICK" << std::endl;
+		this->kick(request, user_index);
 	else if (uppercase_command == Command::INVITE)
-		std::cout << "TODO INVITE" << std::endl;
+		this->invite(request, user_index);
 	else if (uppercase_command == Command::TOPIC)
-		std::cout << "TODO TOPIC" << std::endl;
+		this->topic(request, user_index);
 	else if (uppercase_command == Command::MODE)
 		this->mode(request, user_index);
 	else

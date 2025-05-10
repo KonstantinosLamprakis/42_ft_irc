@@ -198,6 +198,7 @@ void Server::join(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
+    // TODO(KL) delete a channel as soon as it is empty
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
@@ -316,32 +317,15 @@ void Server::join(Request request, int user_id) {
  *   - user can use ~ to send message only to founder of the channel
  *   - suer can use @ to send message only to operators of the channel
  * 
- * modes:
- * - -o: remove a user not in channel -> nothing
- * - -o: remove a user who doesn't exists -> nothing
- * - -o: remove a user who is on channgel but not operator -> normal execution
- * - -o: remove yourself -> done(even if no other operator exists)
- * - -o: add yourself -> ignored
- * - +o: add a user not in channel -> error
- * - +o: add a user who is already operator -> nothing 
- * 
- * - l: with extremely large number -> error 
- * - l: with no-number -> error
- * - l: with no argument -> error
- * - l: with a number less than the current number of users -> works fine, no new users can added
- * - l: with negative number / zero
- * 
- * - k: with no argument or empty string -> error
- * - k: with space as argument -> error 
- * 
  * @param request 
  * @param user_id 
  */
-void Server::privmsg(Request request, int user_id){
+void Server::privmsg(Request request, int user_id, bool is_notice){
     if (!this->_users[user_id].is_registered()) {
         this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
         return;
     }
+    if (is_notice && request.get_args().size() < 2) return; // NOTICE doesn't produce any error
     if (request.get_args().size() < 1 ) {
         this->print_error_to_user(Error::ERR_NORECIPIENT, " :No recipient given. (PRIVMSG)\n", user_id);
         return;
@@ -368,8 +352,11 @@ void Server::privmsg(Request request, int user_id){
             break;
         }
         try{
-            std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PRIVMSG " + targets[i] + " :" + request.get_args()[1] + "\n";
+            std::string command = "PRIVMSG";
+            if (is_notice) command = "NOTICE";
+            std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " " + command + " " + targets[i] + " :" + request.get_args()[1] + "\n";
             if (CHANNEL_PREFIX.find(targets[i][0]) != std::string::npos){
+                if (is_notice) continue; // NOTICE doesn't produce any error
                 // we do not support prefixes as its not mandatory and also not supported from irc.libera.chat
                 this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
             } else if (CHANNEL_TYPE.find(targets[i][0]) != std::string::npos){
@@ -378,15 +365,45 @@ void Server::privmsg(Request request, int user_id){
                 this->print_msg_to_user_with_nickname(msg, targets[i]);
             }
         }catch (const ChannelNotFound &e) {
+            if (is_notice) continue; // NOTICE doesn't produce any error
             this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
         } catch (const UserNotFound &e) {
+            if (is_notice) continue; // NOTICE doesn't produce any error
             this->print_error_to_user(Error::ERR_NOSUCHNICK, targets[i] + " :No such nick/channel.\n", user_id);
         } catch (const UserNotInChannel &e) {
+            // apparently this is the only error that NOTICE seems to return
             this->print_error_to_user(Error::ERR_CANNOTSENDTOCHAN, targets[i] + " :Cannot send to nick/channel.\n", user_id);
         }
     }
 }
 
+/**
+ * @brief 
+ * 
+ *  Edge cases:
+ * 
+ * - sending a mode with +, - and with none of them
+ * - sending multiple modes like +kli TODO(KL)
+ * - -o: remove a user not in channel -> nothing
+ * - -o: remove a user who doesn't exists -> nothing
+ * - -o: remove a user who is on channgel but not operator -> normal execution
+ * - -o: remove yourself -> done(even if no other operator exists)
+ * - -o: add yourself -> ignored
+ * - +o: add a user not in channel -> error
+ * - +o: add a user who is already operator -> nothing 
+ * 
+ * - l: with extremely large number -> error 
+ * - l: with no-number -> error
+ * - l: with no argument -> error
+ * - l: with a number less than the current number of users -> works fine, no new users can added
+ * - l: with negative number / zero
+ * 
+ * - k: with no argument or empty string -> error
+ * - k: with space as argument -> error 
+ * 
+ * @param request 
+ * @param user_id 
+ */
 void Server::mode(Request request, int user_id){
     if (!this->_users[user_id].is_registered()) {
         this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
@@ -415,8 +432,8 @@ void Server::mode(Request request, int user_id){
         this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
         return;
     }
-    if (request.get_args().size() == 1 || request.get_args()[1] == ""){
-        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes() + "\n", user_id);
+    if (request.get_args().size() <= 1 || request.get_args()[1] == ""){
+        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes_with_values() + "\n", user_id);
         this->print_reply_to_user(RPL::RPL_CREATIONTIME, target_channel + " " + this->_channels[channel_index].get_creation_timestamp() + "\n", user_id);
         return;
     }
@@ -425,8 +442,8 @@ void Server::mode(Request request, int user_id){
     unsigned long i = 0;
     bool is_add_mode = modestring[i] != '-';
     if (modestring[i] == '-' || modestring[i] == '+') i++;
-    while(i < modestring.size()){ // does this works like +oilk?
-        if (modestring[i] == 'i' || modestring[i] == 't'){
+    while(i < modestring.size()){ // TODO(KL) impelemnt i and t
+        if (modestring[i] == 'i' || modestring[i] == 't'){ 
             if (is_add_mode){
                 this->_channels[channel_index].add_channel_mode(modestring[i]);
             } else {
@@ -449,8 +466,10 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_max_users(max_users);
+                this->_channels[channel_index].add_channel_mode(modestring[i]);
             } else {
                 this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
+                this->_channels[channel_index].remove_channel_mode(modestring[i]);
             }
         } else if (modestring[i] == 'k'){
             if (is_add_mode){
@@ -464,8 +483,10 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_key(new_key);
+                this->_channels[channel_index].add_channel_mode(modestring[i]);
             }else {
                 this->_channels[channel_index].set_key("");
+                this->_channels[channel_index].remove_channel_mode(modestring[i]);
             }
         } else if (modestring[i] == 'o'){
             if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
@@ -497,4 +518,127 @@ void Server::mode(Request request, int user_id){
         i++;
     }
     // TODO(KL) if not error print all new modes to all users and modify the get mode to get args as well
+}
+
+/**
+ * @brief 
+ * 
+ * Edge cases:
+ * - huge topic (TODO(KL)) + needs more testing
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::topic(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 1 || request.get_args()[0] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    std::string target_channel = request.get_args()[0];
+    int channel_index = this->get_channel_index(target_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, target_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, target_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    // get existed topic
+    if (request.get_args().size() == 1){
+        const std::string topic = this->_channels[channel_index].get_topic();
+        if (topic == ""){ // just return topic
+            this->print_reply_to_user(RPL::RPL_NOTOPIC, target_channel + " :No topic is set\n", user_id);
+        }else {
+            this->print_reply_to_user(RPL::RPL_TOPIC, target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, target_channel + " " + this->_channels[channel_index].get_topic_info() + "\n", user_id);
+        }
+        return;
+    }
+    // assign new topic
+    if (this->_channels[channel_index].get_modes().find_first_of('t') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
+        return;
+    }
+    if (request.get_args()[1] == "")
+        this->_channels[channel_index].clear_topic();
+    else
+        this->_channels[channel_index].set_topic(request.get_args()[1], this->_users[user_id].get_nickname());
+    this->print_reply_to_channel(RPL::RPL_TOPIC, "TOPIC " + target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", this->_channels[channel_index].get_name());
+    return;
+}
+
+/**
+ * @brief TODO(KL) add edge cases e.g. extremely big comment etc.
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::kick(Request request, int user_id){
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 2 || request.get_args()[1] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    std::string target_channel = request.get_args()[0];
+    int channel_index = this->get_channel_index(target_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, target_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, target_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    if (this->_channels[channel_index].get_modes().find_first_of('t') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.\n", user_id);
+        return;
+    }
+    // parsing target_users format: user1,user2
+    std::vector<std::string> target_users;
+    if (request.get_args().size() > 1) {
+        std::stringstream target_users_stream(request.get_args()[1]);
+        std::string user;
+        while (std::getline(target_users_stream, user, ',')) {
+            target_users.push_back(user);
+        }
+    }
+
+    std::string comment = DEFAULT_KICK_COMMENT;
+    if (request.get_args().size() > 3 && request.get_args()[2] != "")
+        comment = request.get_args()[2];
+
+    for (unsigned long i = 0; i < target_users.size(); i++) {
+        const std::string target_user = target_users[i];
+        if (!this->does_user_exist(target_user)){
+            this->print_error_to_user(Error::ERR_NOSUCHNICK, target_user + " :No such nick/channel.\n", user_id);
+            return;
+        }
+        if (!this->_channels[channel_index].is_user_in_channel(target_user)){
+            this->print_error_to_user(Error::ERR_USERNOTINCHANNEL, target_user + " " + target_channel + " :They aren't on that channel.\n", user_id);
+            return;
+        }
+        std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " KICK " + target_channel + " " + target_user + " :" + comment + "\n";
+        this->print_msg_to_channel(msg, target_channel, target_user);
+        this->print_msg_to_user_with_nickname(msg, target_user);
+        this->_channels[channel_index].remove_user(target_user);
+    }
+}
+
+/**
+ * @brief TODO(KL)
+ * 
+ * @param request 
+ * @param user_id 
+ */
+void Server::invite(Request request, int user_id){
+    if (request.getCommand() == "" || user_id == 1) return;
+    // TODO(KL)
 }

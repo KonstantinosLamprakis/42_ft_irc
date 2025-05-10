@@ -24,6 +24,8 @@ class Channel{
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
 		std::time_t 			_creation_timestamp;
+		std::time_t 			_topic_modification_timestamp;
+		std::string 			_topic_creator;
 		unsigned int			_max_users;
 
 	public:
@@ -37,16 +39,19 @@ class Channel{
 	void 		add_operator(std::string user);
 	bool 		remove_operator(std::string user);
 	bool		remove_user(std::string user);
-	void		set_topic(std::string topic);
+	void		set_topic(std::string topic, std::string creator);
 	void 		set_max_users(unsigned int max_users);
 	void 		set_key(std::string key);
+	void 		clear_topic();
 
 	// getters
 	std::string	get_modes();
+	std::string	get_modes_with_values();
 	std::vector<std::string> get_users() const;
 	bool 		is_user_in_channel(const std::string nickname) const;
 	bool 		is_user_operator(const std::string nickname) const;
 	std::string	get_topic() const;
+	std::string	get_topic_info() const;
 	std::string	get_name() const;
 	std::string get_creation_timestamp() const;
 };
