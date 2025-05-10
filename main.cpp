@@ -24,8 +24,13 @@ void validateInput(int ac, char **argv){
 	}
 }
 
+void run_leaks_check(void) {
+    system("leaks ircserv");
+}
+
 int main (int ac, char **argv)
 {
+	atexit(run_leaks_check); // TODO(KL): remove this line before submiting the project
 	struct sigaction	s;
 
 	memset (&s.sa_mask, 0, sizeof (s.sa_mask));
