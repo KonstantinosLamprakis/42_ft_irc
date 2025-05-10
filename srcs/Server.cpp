@@ -203,25 +203,19 @@ void	Server::communicate(int i)
 
 	while (42){
 		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
-		if (bytes_recvd == 0 && !exists_partially_input){
-			std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
+
+		// This may will be helpful for the evaluator
+		// std::cout << "bytes received: " << bytes_recvd << std::endl;
+		// for (int i = 0; i < bytes_recvd; i++)
+		// 	std::cout << "input: |" << buff[i] << "|" << (int)buff[i] << "|" << std::endl;
+		
+		if (bytes_recvd <= 0){
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Connection clossed." << std::endl;
+			if (exists_partially_input) storage.erase(it);
 			close_connection(i);
-		} else if (bytes_recvd < 0 && !exists_partially_input){
-			std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed. Closing conection..." << std::endl;
-			close_connection(i);
-		} else if (bytes_recvd < 0){
-			std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed. Sending buffered data..." << std::endl;
-			// TODO(KL): verify first if you need to do it: continue with str as it is and empty buffer for next time....
-			storage.erase(it);
-			break;
-		} else if (bytes_recvd == 0){
-			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Sending buffered data..." << std::endl;
-			// TODO(KL): continue with str as it is and empty buffer for next time....
-			storage.erase(it);
-			break;
 		}
 
-		if (buff[bytes_recvd - 1] == '\n'){ // 10 \n new line char 
+		if (buff[bytes_recvd - 1] == '\n'){  
 			buff[bytes_recvd - 1] = '\0';
 			str += buff;
 			if (exists_partially_input) storage.erase(it);
