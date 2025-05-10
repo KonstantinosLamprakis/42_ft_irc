@@ -11,7 +11,7 @@ void remove_duplicates(std::vector<std::string> &vec){
     for (unsigned long i = 0; i < vec.size(); i++) {
         std::string uppercase = to_uppercase(vec[i]);
         if (seen.find(uppercase) != seen.end()) {
-            vec.erase(vec.begin() + i);
+            vec.erase(vec.begin() + i--);
         } else {
             seen.insert(uppercase);
         }

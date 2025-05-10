@@ -198,13 +198,14 @@ void Server::join(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
-    // TODO(KL) delete a channel as soon as it is empty
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
-            if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
-                this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
-            }
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
+            this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", this->_channels[i].get_name(), this->_users[user_id].get_nickname());
+            this->_channels[i].remove_user(this->_users[user_id].get_nickname());
             this->_users[user_id].remove_channel(this->_channels[i].get_name());
+            if (this->_channels[i].get_users().empty())
+                this->_channels.erase(_channels.begin() + i--);
         }
         return;
     }
@@ -221,26 +222,22 @@ void Server::join(Request request, int user_id) {
     const std::string invalid_chars = "\a," + SPACE;
     for (size_t i = 0; i < channels.size(); i++) {
         if (channels[i].size() == 0){
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i].size() > 50){
             this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i].find_first_of(invalid_chars) != std::string::npos){
             this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i][0] != '#'){
             this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, channels[i] + " :No such channel.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
     }
@@ -266,7 +263,7 @@ void Server::join(Request request, int user_id) {
         }
 
         int channel_index = this->get_channel_index(channels[i]);
-        if (channel_index == -1){
+        if (channel_index == -1){ // create new channel
             std::string key = "";
             if (keys.size() >= i + 1) {
                 key = keys[i];
@@ -274,7 +271,7 @@ void Server::join(Request request, int user_id) {
             this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
-            return;
+            continue;
         }  
 
         try {
@@ -282,19 +279,23 @@ void Server::join(Request request, int user_id) {
             if (keys.size() >= i + 1) {
                 key = keys[i];
             }
+            if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos){
+                bool is_user_invited = this->_channels[channel_index].is_user_invited(this->_users[user_id].get_nickname());
+                if (!is_user_invited){
+                    this->print_error_to_user(Error::ERR_INVITEONLYCHAN, channels[i] + " :Cannot join channel (+i)- you must be invited.\n", user_id);
+                    continue;
+                }
+            }
             this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
             this->_users[user_id].add_channel(channels[i]);
+            this->_channels[channel_index].remove_invited_user(this->_users[user_id].get_nickname());
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
+            this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", channels[i], this->_users[user_id].get_nickname());
         } catch (const MaxNumberOfUsersInChannel &e) {
             this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
             this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
         }
-        /* TODO(KL)
-            - what if a user tries to join a channel which already is a member?
-            - make it work with multiple channels per user
-            - handle the case of invite only channels
-            - print message when new user joins the channel(and also when he leaves, mode changes etc.)
-        */
     }
 }
 
@@ -438,16 +439,18 @@ void Server::mode(Request request, int user_id){
         return;
     }
     std::string modestring = request.get_args()[1];
+    std::string executed_modes = "";
+    std::string executed_args = "";
     unsigned long next_arg = 2;
     unsigned long i = 0;
     bool is_add_mode = modestring[i] != '-';
     if (modestring[i] == '-' || modestring[i] == '+') i++;
-    while(i < modestring.size()){ // TODO(KL) impelemnt i and t
+    while(i < modestring.size()){
         if (modestring[i] == 'i' || modestring[i] == 't'){ 
             if (is_add_mode){
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].add_channel_mode(modestring[i])) executed_modes += modestring[i];
             } else {
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'l'){
             if (is_add_mode){
@@ -466,10 +469,13 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_max_users(max_users);
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].add_channel_mode(modestring[i])) {
+                    executed_modes += modestring[i];
+                    executed_args += " " + max_users_for_channel_str;
+                }
             } else {
                 this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'k'){
             if (is_add_mode){
@@ -483,10 +489,13 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_key(new_key);
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].add_channel_mode(modestring[i])) {
+                    executed_args += " " + new_key;
+                    executed_modes += modestring[i];
+                }
             }else {
                 this->_channels[channel_index].set_key("");
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'o'){
             if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
@@ -517,7 +526,10 @@ void Server::mode(Request request, int user_id){
         }
         i++;
     }
-    // TODO(KL) if not error print all new modes to all users and modify the get mode to get args as well
+    if (is_add_mode && executed_modes.size() > 0) executed_modes = " +" + executed_modes;
+    else if (executed_modes.size() > 0) executed_modes = " -" + executed_modes;
+    std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " MODE " + target_channel + executed_modes + executed_args + "\n";
+    this->print_msg_to_channel(msg, target_channel, this->_users[user_id].get_nickname());
 }
 
 /**
@@ -639,6 +651,36 @@ void Server::kick(Request request, int user_id){
  * @param user_id 
  */
 void Server::invite(Request request, int user_id){
-    if (request.getCommand() == "" || user_id == 1) return;
-    // TODO(KL)
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 2 || request.get_args()[1] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    const std::string invited_user = request.get_args()[0];
+    const std::string invited_channel = request.get_args()[1];
+    int channel_index = this->get_channel_index(invited_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, invited_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, invited_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos){
+        if (!this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+            this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, invited_channel + " :You are not channel operator.\n", user_id);
+            return;
+        }
+    }
+    if (this->_channels[channel_index].is_user_in_channel(invited_user)){
+        this->print_error_to_user(Error::ERR_USERONCHANNEL, invited_user + " " + invited_channel + " :is already on channel.\n", user_id);
+        return;
+    }
+    this->_channels[channel_index].add_invited_user(invited_user);
+    this->print_reply_to_user(RPL::RPL_INVITING, invited_user + " " + invited_channel + "\n", user_id);
+    this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " INVITE " + invited_user + " :" + invited_channel + "\n", invited_user);
 }

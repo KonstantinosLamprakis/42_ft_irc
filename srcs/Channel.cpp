@@ -13,26 +13,28 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 	this->_max_users = DEFAULT_MAX_USERS_PER_CHANNEL;
 }
 
-void Channel::add_channel_mode(char c)
+bool Channel::add_channel_mode(char c)
 {
 	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
 		if (this->_channel_modes[i] == c)
-			return ;
+			return (false);
 	}
 	this->_channel_modes.push_back(c);
+	return (true);
 }
 
-void Channel::remove_channel_mode(char c)
+bool Channel::remove_channel_mode(char c)
 {
 	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
 		if (this->_channel_modes[i] == c)
 		{
-			this->_channel_modes.erase(this->_channel_modes.begin() + i);
-			return ;
+			this->_channel_modes.erase(this->_channel_modes.begin() + i--);
+			return (true);
 		}
 	}
+	return (false);
 }
 
 void Channel::add_user(std::string user, std::string key){
@@ -62,7 +64,7 @@ bool Channel::remove_user(std::string user){
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
 		if (this->_users[i] == user){
-			this->_users.erase(this->_users.begin() + i);
+			this->_users.erase(this->_users.begin() + i--);
 			is_user_found = true;
 			break;
 		}
@@ -70,7 +72,7 @@ bool Channel::remove_user(std::string user){
 	for (unsigned long i = 0; i < this->_operators.size(); i++)
 	{
 		if (this->_operators[i] == user){
-			this->_operators.erase(this->_operators.begin() + i);
+			this->_operators.erase(this->_operators.begin() + i--);
 			break;
 		}
 	}
@@ -170,11 +172,43 @@ bool Channel::remove_operator(std::string user){
 	for (unsigned long i = 0; i < this->_operators.size(); i++)
 	{
 		if (to_uppercase(this->_operators[i]) == user_uppercase){
-			this->_operators.erase(this->_operators.begin() + i);
+			this->_operators.erase(this->_operators.begin() + i--);
 			break;
 		}
 	}
 	return (is_user_found);
+}
+
+void Channel::add_invited_user(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
+			return;
+		}
+	}
+	this->_invited_users.push_back(user);
+}
+
+void Channel::remove_invited_user(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
+			this->_invited_users.erase(this->_invited_users.begin() + i--);
+			break;
+		}
+	}
+}
+
+bool Channel::is_user_invited(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase)
+			return (true);
+	}
+	return (false);
 }
 
 void Channel::set_key(std::string key){

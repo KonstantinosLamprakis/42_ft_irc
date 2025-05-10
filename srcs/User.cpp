@@ -95,7 +95,7 @@ void User::remove_channel(std::string channel)
 	for (unsigned long i = 0; i < this->_channels.size(); i++)
 	{
 		if (this->_channels[i] == channel){
-			this->_channels.erase(this->_channels.begin() + i);
+			this->_channels.erase(this->_channels.begin() + i--);
 			break;
 		}
 	}

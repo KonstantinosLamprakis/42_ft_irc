@@ -53,6 +53,7 @@ namespace RPL {
 	const std::string RPL_NOTOPIC = "331";
 	const std::string RPL_TOPIC = "332";
 	const std::string RPL_TOPICWHOTIME = "333";	
+	const std::string RPL_INVITING = "341";
 }
 
 // errors starting with 9 are custom
@@ -84,6 +85,8 @@ namespace Error {
 	const std::string ERR_INVALIDMODEPARAM = "696";
 	const std::string ERR_INVALIDKEY = "525";
 	const std::string ERR_NOTONCHANNEL = "442";
+	const std::string ERR_USERONCHANNEL = "443";
+	const std::string ERR_INVITEONLYCHAN = "473";
 }
 
 class Server
@@ -118,7 +121,7 @@ class Server
 		void		print_msg_to_user_with_nickname(std::string msg, std::string nickname);
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		void		print_reply_to_user(std::string numeric, std::string msg, int user_index);
-		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
+		void		print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick);
 		void 		print_reply_to_channel(std::string numeric, std::string msg, std::string channel);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);

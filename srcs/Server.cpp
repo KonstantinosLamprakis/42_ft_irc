@@ -103,8 +103,7 @@ void Server::print_msg_to_channel(std::string msg, std::string channel, std::str
 	if (!this->_channels[channel_index].is_user_in_channel(sender_nick))
 		throw UserNotInChannel();
 	std::vector<std::string> channel_users = this->_channels[channel_index].get_users();
-	for (unsigned long j = 0; j < channel_users.size(); j++)
-	{
+	for (unsigned long j = 0; j < channel_users.size(); j++) {
 		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
 		print_msg_to_user_with_nickname(msg, channel_users[j]);
 	}
@@ -159,8 +158,7 @@ void Server::close_connection(int user_index){
 		this->_channels[i].remove_user(this->_users[user_index].get_nickname());
 		// TODO(KL) should I print a message to the channel that the user left?
 		if (this->_channels[i].get_users().empty()){
-			this->_channels.erase(_channels.begin() + i);
-			i--;
+			this->_channels.erase(_channels.begin() + i--);
 		}
 	}
 	this->_amnt_connections--;
@@ -261,7 +259,7 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 					if (recv(this->_connection_fds[i].fd, test, sizeof(test), 0) == 0)
 					{
 						close (this->_connection_fds[i].fd);
-						this->_connection_fds.erase(_connection_fds.begin() + i);
+						this->_connection_fds.erase(_connection_fds.begin() + i--);
 					}
 				}
 			}
