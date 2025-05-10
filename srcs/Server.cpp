@@ -192,76 +192,56 @@ void	Server::communicate(int i)
 	char									buff[BUFFER_SIZE + 1]; //buffer to receive data
 	int										bytes_recvd; //to store return value of recv
 	static std::map<int, std::string>		storage;
-	std::string								str;
+	std::string								str = "";
 	std::map<int, std::string>::iterator	it;
 
 	it = storage.find(i);
-	if (it != storage.end())
-		str = storage[i];
-	else
-		str = "";
+	const bool exists_partially_input = (it != storage.end());
+	if (exists_partially_input) str = storage[i];
+
 	memset(&buff, 0, sizeof(buff));
-	bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
-	while (bytes_recvd != 0)
-	{
-		// std::cout << "iterator: " << it << std::endl;
-		std::cout << "bytes received: " << bytes_recvd << std::endl;
-		for (int i = 0; i < bytes_recvd; i++)
-			std::cout << "input: |" << buff[i] << "|" << (int)buff[i] << "|" << std::endl;
-		if (bytes_recvd < 0 || (bytes_recvd == 0 && str == ""))
-		{
-			if (bytes_recvd < 0)
-			{
-				if (str != "")
-					break ;
-				return ;
-				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
-			}
-			else
-			{
-				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
-				close_connection(i);
-			}
-			return ;
+
+	while (42){
+		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
+		if (bytes_recvd == 0 && !exists_partially_input){
+			std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
+			close_connection(i);
+		} else if (bytes_recvd < 0 && !exists_partially_input){
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed. Closing conection..." << std::endl;
+			close_connection(i);
+		} else if (bytes_recvd < 0){
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed. Sending buffered data..." << std::endl;
+			// TODO(KL): verify first if you need to do it: continue with str as it is and empty buffer for next time....
+			storage.erase(it);
+			break;
+		} else if (bytes_recvd == 0){
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Sending buffered data..." << std::endl;
+			// TODO(KL): continue with str as it is and empty buffer for next time....
+			storage.erase(it);
+			break;
 		}
-		if (buff[bytes_recvd - 1] == 10)
-		{
-			// std::cout << "test: " << buff[bytes_recvd - 1] << "|" << buff[bytes_recvd - 2] << "|" << std::endl;
+
+		if (buff[bytes_recvd - 1] == '\n'){ // 10 \n new line char 
 			buff[bytes_recvd - 1] = '\0';
-			// buff[bytes_recvd - 2] = '\0';
 			str += buff;
-			if (it != storage.end())
-				storage.erase(it);
+			if (exists_partially_input) storage.erase(it);
 			break ;
 		}
-		// else if (buff[bytes_recvd - 1] == 4)
-		else
-		{
+		else {
 			buff[bytes_recvd] = '\0';
 			str += buff;
-			if (it != storage.end())
+			if (exists_partially_input)
 				storage[i] = str;
 			else
 				storage.insert(std::pair<int, std::string>(i, str));
-				std::cout << "here" << std::endl;
 			return ;
-				// continue ;
 		}
-		// buff[bytes_recvd] = '\0';
-		// str += buff;
 		memset(&buff, 0, sizeof(buff));
-		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
-		if (bytes_recvd < 0)
-		{
-			std::cout << str <<std::endl;
-			break ;
-		}
 	}
 	if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 	if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
-	// str.pop_back(); //remove \n at the end
 	Request in = parse(str);
-	execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
+	execute(in, i);
 }
 
 void	Server::accept_connection()
