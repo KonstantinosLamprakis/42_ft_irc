@@ -186,12 +186,16 @@ void	Server::communicate(int i)
 	it = storage.find(i);
 	if (it != storage.end())
 		str = storage[i];
+	else
+		str = "";
 	memset(&buff, 0, sizeof(buff));
 	bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
 	while (bytes_recvd != 0)
 	{
 		// std::cout << "iterator: " << it << std::endl;
 		std::cout << "bytes received: " << bytes_recvd << std::endl;
+		for (int i = 0; i < bytes_recvd; i++)
+			std::cout << "input: |" << buff[i] << "|" << (int)buff[i] << "|" << std::endl;
 		if (bytes_recvd < 0 || (bytes_recvd == 0 && str == ""))
 		{
 			if (bytes_recvd < 0)
@@ -203,29 +207,37 @@ void	Server::communicate(int i)
 			}
 			return ;
 		}
-		if (buff[bytes_recvd] == 13 && buff[bytes_recvd - 1] == 10)
+		if (buff[bytes_recvd - 1] == 13 && buff[bytes_recvd - 2] == 10)
 		{
-			buff[bytes_recvd] = '\0';
+			std::cout << "test: " << buff[bytes_recvd - 1] << "|" << buff[bytes_recvd - 2] << "|" << std::endl;
 			buff[bytes_recvd - 1] = '\0';
-			str = str + buff;
-			storage.erase(it);
+			buff[bytes_recvd - 2] = '\0';
+			str += buff;
+			if (it != storage.end())
+				storage.erase(it);
 			break ;
 		}
-		else if (buff[bytes_recvd] == 4)
+		else if (buff[bytes_recvd - 1] == 4)
 		{
-			buff[bytes_recvd] = '\0';
-			str = str + buff;
+			buff[bytes_recvd - 1] = '\0';
+			str += buff;
 			if (it != storage.end())
 				storage[i] = str;
 			else
 				storage.insert(std::pair<int, std::string>(i, str));
-			return ;
+			std::cout << "works" << std::endl;
+			continue ;
 		}
-		str = str + buff;
+		std::cout << "here" << std::endl;
+		buff[bytes_recvd] = '\0';
+		str += buff;
 		memset(&buff, 0, sizeof(buff));
 		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
 		if (bytes_recvd < 0)
+		{
+			std::cout << str <<std::endl;
 			break ;
+		}
 	}
 	if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 	if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
