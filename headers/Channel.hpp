@@ -21,6 +21,7 @@ class Channel{
 		std::string				_key;
 		std::vector<std::string>	_users;
 		std::vector<std::string>	_operators;
+		std::vector<std::string>	_invited_users;
 		std::string				_topic;
 		std::vector<char>		_channel_modes;
 		std::time_t 			_creation_timestamp;
@@ -43,6 +44,9 @@ class Channel{
 	void 		set_max_users(unsigned int max_users);
 	void 		set_key(std::string key);
 	void 		clear_topic();
+	void 		add_invited_user(std::string user);
+	void	 	remove_invited_user(std::string user);
+	bool	 	is_user_invited(std::string user);
 
 	// getters
 	std::string	get_modes();

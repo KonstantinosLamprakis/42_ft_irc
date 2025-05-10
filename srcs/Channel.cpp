@@ -177,6 +177,38 @@ bool Channel::remove_operator(std::string user){
 	return (is_user_found);
 }
 
+void Channel::add_invited_user(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
+			return;
+		}
+	}
+	this->_invited_users.push_back(user);
+}
+
+void Channel::remove_invited_user(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
+			this->_invited_users.erase(this->_invited_users.begin() + i);
+			break;
+		}
+	}
+}
+
+bool Channel::is_user_invited(std::string user){
+	const std::string user_uppercase = to_uppercase(user);
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase)
+			return (true);
+	}
+	return (false);
+}
+
 void Channel::set_key(std::string key){
 	this->_key = key;
 }

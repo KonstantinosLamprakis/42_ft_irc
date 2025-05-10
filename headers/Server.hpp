@@ -53,6 +53,7 @@ namespace RPL {
 	const std::string RPL_NOTOPIC = "331";
 	const std::string RPL_TOPIC = "332";
 	const std::string RPL_TOPICWHOTIME = "333";	
+	const std::string RPL_INVITING = "341";
 }
 
 // errors starting with 9 are custom
@@ -84,6 +85,7 @@ namespace Error {
 	const std::string ERR_INVALIDMODEPARAM = "696";
 	const std::string ERR_INVALIDKEY = "525";
 	const std::string ERR_NOTONCHANNEL = "442";
+	const std::string ERR_USERONCHANNEL = "443";
 }
 
 class Server

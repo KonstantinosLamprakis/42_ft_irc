@@ -266,7 +266,7 @@ void Server::join(Request request, int user_id) {
         }
 
         int channel_index = this->get_channel_index(channels[i]);
-        if (channel_index == -1){
+        if (channel_index == -1){ // create new channel
             std::string key = "";
             if (keys.size() >= i + 1) {
                 key = keys[i];
@@ -274,7 +274,7 @@ void Server::join(Request request, int user_id) {
             this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
-            return;
+            continue;
         }  
 
         try {
@@ -282,8 +282,16 @@ void Server::join(Request request, int user_id) {
             if (keys.size() >= i + 1) {
                 key = keys[i];
             }
+            if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos){
+                bool is_user_invited = this->_channels[channel_index].is_user_invited(this->_users[user_id].get_nickname());
+                if (!is_user_invited){ // TODO(KL) adjust the error message
+                    this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, channels[i] + " :You are not invited to this channel.\n", user_id);
+                    continue;
+                }
+            }
             this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
             this->_users[user_id].add_channel(channels[i]);
+            this->_channels[channel_index].remove_invited_user(this->_users[user_id].get_nickname());
         } catch (const MaxNumberOfUsersInChannel &e) {
             this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
@@ -639,6 +647,36 @@ void Server::kick(Request request, int user_id){
  * @param user_id 
  */
 void Server::invite(Request request, int user_id){
-    if (request.getCommand() == "" || user_id == 1) return;
-    // TODO(KL)
+    if (!this->_users[user_id].is_registered()) {
+        this->print_error_to_user(Error::ERR_NOTREGISTERED, " :You have not registered.\n", user_id);
+        return;
+    }
+    if (request.get_args().size() < 2 || request.get_args()[1] == "" ) { 
+        this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
+        return;
+    }
+    const std::string invited_channel = request.get_args()[0];
+    const std::string invited_user = request.get_args()[1];
+    int channel_index = this->get_channel_index(invited_channel);
+    if (channel_index == -1){
+        this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, invited_channel + " :No such channel.\n", user_id);
+        return;
+    }
+    if (!this->_channels[channel_index].is_user_in_channel(this->_users[user_id].get_nickname())){
+        this->print_error_to_user(Error::ERR_NOTONCHANNEL, invited_channel + " :You are not on that channel.\n", user_id);
+        return;
+    }
+    if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos){
+        if (!this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+            this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, invited_channel + " :You are not channel operator.\n", user_id);
+            return;
+        }
+    }
+    if (this->_channels[channel_index].is_user_in_channel(invited_user)){
+        this->print_error_to_user(Error::ERR_USERONCHANNEL, invited_user + " " + invited_channel + " :is already on channel.\n", user_id);
+        return;
+    }
+    this->_channels[channel_index].add_invited_user(invited_user);
+    this->print_reply_to_user(RPL::RPL_INVITING, invited_user + " " + invited_channel + "\n", user_id);
+    this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " INVITE " + invited_user + " :" + invited_channel + "\n", invited_user);
 }
