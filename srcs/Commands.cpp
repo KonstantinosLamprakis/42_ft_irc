@@ -18,7 +18,7 @@
  */
 void Server::pass(Request request, int user_id) {
     if (this->_users[user_id].is_authenticated()) {
-        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, " :User is already registered.\n", user_id);
+        this->print_error_to_user(Error::ERR_ALREADYREGISTERED, " :User is already authenticated.\n", user_id);
         return;
     }
     if (request.get_args().size() < 1 || request.get_args()[0] == "") { // if more than 1, server only use the 1rst one
@@ -639,7 +639,7 @@ void Server::kick(Request request, int user_id){
     }
 
     std::string comment = DEFAULT_KICK_COMMENT;
-    if (request.get_args().size() > 3 && request.get_args()[2] != "")
+    if (request.get_args().size() >= 3 && request.get_args()[2] != "")
         comment = request.get_args()[2];
 
     for (unsigned long i = 0; i < target_users.size(); i++) {
@@ -656,6 +656,9 @@ void Server::kick(Request request, int user_id){
         this->print_msg_to_channel(msg, target_channel, target_user);
         this->print_msg_to_user_with_nickname(msg, target_user);
         this->_channels[channel_index].remove_user(target_user);
+        int target_user_index = this->get_user_index(target_user);
+        if (target_user_index == -1) return;
+        this->_users[target_user_index].remove_channel(target_channel);
     }
 }
 

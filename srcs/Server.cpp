@@ -433,3 +433,16 @@ int Server::get_channel_index(std::string channel_name){
 	}
 	return (-1);
 }
+
+
+int Server::get_user_index(std::string nickname){
+	std::string uppercase_nickname = to_uppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname){
+			return (i);
+		}
+	}
+	return (-1);
+}
+

@@ -47,7 +47,7 @@ int main (int ac, char **argv)
 		irc_server.close_and_free_socket(std::string());
 	}
 	catch(const std::exception& e){
-		std::cout << e.what() << std::endl;
+		throw e; // todo(KL): remove this before submiting the project
 		return (1);
 	}
 	return (0);

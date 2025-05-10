@@ -133,6 +133,7 @@ class Server
 		void 		print_reply_to_channel(std::string numeric, std::string msg, std::string channel);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);
+		int 		get_user_index(std::string nickname);
 
 		// commands
 		void		pass(Request request, int user_index);
