@@ -219,30 +219,31 @@ void	Server::communicate(int i)
 			}
 			return ;
 		}
-		if (buff[bytes_recvd - 1] == 13 && buff[bytes_recvd - 2] == 10)
+		if (buff[bytes_recvd - 1] == 10)
 		{
-			std::cout << "test: " << buff[bytes_recvd - 1] << "|" << buff[bytes_recvd - 2] << "|" << std::endl;
+			// std::cout << "test: " << buff[bytes_recvd - 1] << "|" << buff[bytes_recvd - 2] << "|" << std::endl;
 			buff[bytes_recvd - 1] = '\0';
-			buff[bytes_recvd - 2] = '\0';
+			// buff[bytes_recvd - 2] = '\0';
 			str += buff;
 			if (it != storage.end())
 				storage.erase(it);
 			break ;
 		}
-		else if (buff[bytes_recvd - 1] == 4)
+		// else if (buff[bytes_recvd - 1] == 4)
+		else
 		{
-			buff[bytes_recvd - 1] = '\0';
+			// buff[bytes_recvd - 1] = '\0';
 			str += buff;
 			if (it != storage.end())
 				storage[i] = str;
 			else
 				storage.insert(std::pair<int, std::string>(i, str));
-			std::cout << "works" << std::endl;
-			continue ;
+				std::cout << "here" << std::endl;
+			return ;
+				// continue ;
 		}
-		std::cout << "here" << std::endl;
-		buff[bytes_recvd] = '\0';
-		str += buff;
+		// buff[bytes_recvd] = '\0';
+		// str += buff;
 		memset(&buff, 0, sizeof(buff));
 		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
 		if (bytes_recvd < 0)
