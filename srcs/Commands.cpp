@@ -97,7 +97,7 @@ void Server::nick(Request request, int user_id) {
     } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
         this->_users[user_id].set_nickname(nickname);
         if (this->_users[user_id].is_registered()) {
-            // print welcome message RPL_WELCOME (001)
+            //TODO(KL) print RPL from 1 to 5
             std::string welcome_msg = ":" + SERVER_NAME + " 001 " + nickname + " :Welcome to " + SERVER_NAME +" Internet Relay Chat Network " + nickname + "\n";
             this->print_msg_to_user(welcome_msg, user_id);
         }

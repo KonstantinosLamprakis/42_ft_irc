@@ -66,7 +66,7 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
  */
 void	Server::print_msg_to_user(std::string msg, int user_index){
 	if (send(this->_connection_fds[user_index].fd, msg.c_str(), msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 /**
@@ -120,7 +120,7 @@ void Server::print_error_to_user(std::string numeric, std::string error_msg, int
 	std::string target = this->_users[user_index].get_nickname();
 	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + error_msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 /**
@@ -135,7 +135,7 @@ void Server::print_reply_to_user(std::string numeric, std::string msg, int user_
 	std::string target = this->_users[user_index].get_nickname();
 	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 void Server::print_reply_to_channel(std::string numeric, std::string msg, std::string channel){
