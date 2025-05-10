@@ -199,7 +199,12 @@ void	Server::communicate(int i)
 		if (bytes_recvd < 0 || (bytes_recvd == 0 && str == ""))
 		{
 			if (bytes_recvd < 0)
+			{
+				if (str != "")
+					break ;
+				return ;
 				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
+			}
 			else
 			{
 				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
@@ -220,7 +225,7 @@ void	Server::communicate(int i)
 		// else if (buff[bytes_recvd - 1] == 4)
 		else
 		{
-			// buff[bytes_recvd - 1] = '\0';
+			buff[bytes_recvd] = '\0';
 			str += buff;
 			if (it != storage.end())
 				storage[i] = str;
