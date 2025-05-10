@@ -235,14 +235,14 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 	this->_connection_fds[0].events = 0;
 	this->_connection_fds[0].events = POLLIN;
 	this->_amnt_connections = 1;
-	while (Server::_signal_status == false)
+	while (this->_signal_status == false)
 	{
 		err = poll(&this->_connection_fds[0], this->_amnt_connections, -1);
-		if (err <= -1)
+		if (err <= -1 && this->_signal_status == false)
 			throw ClientConnectionFailed();
 		for (int i = 0; i < this->_amnt_connections; i++)
 		{
-			if (this->_connection_fds[i].revents & (POLLIN | POLLHUP)) // is anywhere input waiting
+			if ((this->_connection_fds[i].revents & (POLLIN | POLLHUP)) && this->_signal_status == false) // is anywhere input waiting
 			{
 				if (this->_connection_fds[i].fd == this->_sockfd)
 					this->accept_connection();
@@ -250,7 +250,7 @@ void	Server::listentosocket() //listens to the open socket of the server for inc
 					this->communicate(i);
 				continue ; // it looks like we need to call poll before EVERY time we call accept, send, recv(eval sheet)
 			}
-			if (this->_connection_fds[i].revents & POLLHUP)
+			if ((this->_connection_fds[i].revents & POLLHUP) && this->_signal_status == false)
 			{
 				if (this->_connection_fds[i].fd == this->_sockfd) // does this make sense? - if bind socket is gone server is off, right?
 					break ;
@@ -380,7 +380,7 @@ void Server::execute(Request request, int user_index){
 void	Server::signal_handler(int signal)
 {
 	(void)signal;
-	Server::_signal_status = true;
+	_signal_status = true;
 }
 
 void	Server::close_and_free_socket(std::string err_msg)
