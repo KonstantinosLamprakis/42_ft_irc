@@ -655,7 +655,9 @@ void Server::kick(Request request, int user_id){
         std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " KICK " + target_channel + " " + target_user + " :" + comment + "\n";
         this->print_msg_to_channel(msg, target_channel, target_user);
         this->print_msg_to_user_with_nickname(msg, target_user);
-        this->_channels[channel_index].remove_user(target_user);
+        this->_channels[channel_index].remove_user(target_user); 
+        if (this->_channels[channel_index].get_users().empty())
+            this->_channels.erase(_channels.begin() + channel_index);
         int target_user_index = this->get_user_index(target_user);
         if (target_user_index == -1) return;
         this->_users[target_user_index].remove_channel(target_channel);
