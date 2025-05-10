@@ -30,7 +30,7 @@ bool Channel::remove_channel_mode(char c)
 	{
 		if (this->_channel_modes[i] == c)
 		{
-			this->_channel_modes.erase(this->_channel_modes.begin() + i);
+			this->_channel_modes.erase(this->_channel_modes.begin() + i--);
 			return (true);
 		}
 	}
@@ -64,7 +64,7 @@ bool Channel::remove_user(std::string user){
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
 		if (this->_users[i] == user){
-			this->_users.erase(this->_users.begin() + i);
+			this->_users.erase(this->_users.begin() + i--);
 			is_user_found = true;
 			break;
 		}
@@ -72,7 +72,7 @@ bool Channel::remove_user(std::string user){
 	for (unsigned long i = 0; i < this->_operators.size(); i++)
 	{
 		if (this->_operators[i] == user){
-			this->_operators.erase(this->_operators.begin() + i);
+			this->_operators.erase(this->_operators.begin() + i--);
 			break;
 		}
 	}
@@ -172,7 +172,7 @@ bool Channel::remove_operator(std::string user){
 	for (unsigned long i = 0; i < this->_operators.size(); i++)
 	{
 		if (to_uppercase(this->_operators[i]) == user_uppercase){
-			this->_operators.erase(this->_operators.begin() + i);
+			this->_operators.erase(this->_operators.begin() + i--);
 			break;
 		}
 	}
@@ -195,7 +195,7 @@ void Channel::remove_invited_user(std::string user){
 	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
 	{
 		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
-			this->_invited_users.erase(this->_invited_users.begin() + i);
+			this->_invited_users.erase(this->_invited_users.begin() + i--);
 			break;
 		}
 	}

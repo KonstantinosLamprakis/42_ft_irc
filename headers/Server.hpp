@@ -121,7 +121,7 @@ class Server
 		void		print_msg_to_user_with_nickname(std::string msg, std::string nickname);
 		void		print_error_to_user(std::string numeric, std::string error_msg, int user_index);
 		void		print_reply_to_user(std::string numeric, std::string msg, int user_index);
-		void		print_msg_to_channel(std::string msg, std::string channel, std::string creator_nickname);
+		void		print_msg_to_channel(std::string msg, std::string channel, std::string sender_nick);
 		void 		print_reply_to_channel(std::string numeric, std::string msg, std::string channel);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);

@@ -200,13 +200,12 @@ void Server::join(Request request, int user_id) {
     }
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
-            if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
-                this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
-            }
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
+            this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", this->_channels[i].get_name(), this->_users[user_id].get_nickname());
+            this->_channels[i].remove_user(this->_users[user_id].get_nickname());
             this->_users[user_id].remove_channel(this->_channels[i].get_name());
-            if (this->_channels[i].get_users().empty()){
-                this->_channels.erase(_channels.begin() + i);
-            }
+            if (this->_channels[i].get_users().empty())
+                this->_channels.erase(_channels.begin() + i--);
         }
         return;
     }
@@ -223,26 +222,22 @@ void Server::join(Request request, int user_id) {
     const std::string invalid_chars = "\a," + SPACE;
     for (size_t i = 0; i < channels.size(); i++) {
         if (channels[i].size() == 0){
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i].size() > 50){
             this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i].find_first_of(invalid_chars) != std::string::npos){
             this->print_error_to_user(Error::ERR_ILLEGALCHANNELNAME, channels[i] + " :Illegal channel name.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
         if (channels[i][0] != '#'){
             this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, channels[i] + " :No such channel.\n", user_id);
-            channels.erase(channels.begin() + i);
-            i--;
+            channels.erase(channels.begin() + i--);
             continue;
         }
     }
@@ -294,16 +289,13 @@ void Server::join(Request request, int user_id) {
             this->_channels[channel_index].add_user(this->_users[user_id].get_nickname(), key);
             this->_users[user_id].add_channel(channels[i]);
             this->_channels[channel_index].remove_invited_user(this->_users[user_id].get_nickname());
+            this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
+            this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", channels[i], this->_users[user_id].get_nickname());
         } catch (const MaxNumberOfUsersInChannel &e) {
             this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
             this->print_error_to_user(Error::ERR_BADCHANNELKEY, channels[i] + " :Cannot join channel (+k). Incorrect key.\n", user_id);
         }
-        /* TODO(KL)
-            - what if a user tries to join a channel which already is a member?
-            - make it work with multiple channels per user
-            - print message when new user joins the channel(and also when he leaves, mode changes etc.)
-        */
     }
 }
 
