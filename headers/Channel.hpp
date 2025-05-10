@@ -19,6 +19,7 @@ class Channel{
 	private:
 		std::string				_name;
 		std::string				_key;
+		std::string				_founder;
 		std::vector<std::string>	_users;
 		std::vector<std::string>	_operators;
 		std::vector<std::string>	_invited_users;
@@ -47,6 +48,7 @@ class Channel{
 	void 		add_invited_user(std::string user);
 	void	 	remove_invited_user(std::string user);
 	bool	 	is_user_invited(std::string user);
+	void 		rename_user(std::string old_nickname, std::string new_nickname);
 
 	// getters
 	std::string	get_modes();
@@ -58,6 +60,7 @@ class Channel{
 	std::string	get_topic_info() const;
 	std::string	get_name() const;
 	std::string get_creation_timestamp() const;
+	std::string get_names() const;
 };
 
 #endif

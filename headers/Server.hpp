@@ -53,6 +53,7 @@ namespace RPL {
 	const std::string RPL_NOTOPIC = "331";
 	const std::string RPL_TOPIC = "332";
 	const std::string RPL_TOPICWHOTIME = "333";	
+	const std::string RPL_NAMREPLY = "353";	
 	const std::string RPL_INVITING = "341";
 }
 

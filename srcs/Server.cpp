@@ -66,7 +66,7 @@ void	Server::send_data(int n, std::string str) //  can be done if request exists
  */
 void	Server::print_msg_to_user(std::string msg, int user_index){
 	if (send(this->_connection_fds[user_index].fd, msg.c_str(), msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 /**
@@ -107,7 +107,6 @@ void Server::print_msg_to_channel(std::string msg, std::string channel, std::str
 		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
 		print_msg_to_user_with_nickname(msg, channel_users[j]);
 	}
-	return;
 }
 
 /**
@@ -121,7 +120,7 @@ void Server::print_error_to_user(std::string numeric, std::string error_msg, int
 	std::string target = this->_users[user_index].get_nickname();
 	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + error_msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 /**
@@ -136,7 +135,7 @@ void Server::print_reply_to_user(std::string numeric, std::string msg, int user_
 	std::string target = this->_users[user_index].get_nickname();
 	std::string final_msg = ":" + SERVER_NAME + " " + numeric + " " + target + " " + msg + "\n";
 	if (send(this->_connection_fds[user_index].fd, final_msg.c_str(), final_msg.length(), 0) == -1)
-		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << ": " << strerror(errno) << std::endl;
+		std::cout << "send() error for fd: " << this->_connection_fds[user_index].fd << std::endl;
 }
 
 void Server::print_reply_to_channel(std::string numeric, std::string msg, std::string channel){
@@ -151,16 +150,18 @@ void Server::print_reply_to_channel(std::string numeric, std::string msg, std::s
 }
 
 void Server::close_connection(int user_index){
-	close (this->_connection_fds[user_index].fd);
-	this->_connection_fds.erase(_connection_fds.begin() + user_index);
-	this->_users.erase(_users.begin() + user_index);
 	for (unsigned long i = 0; i < this->_channels.size(); i++){
+		this->_channels[i].remove_invited_user(this->_users[user_index].get_nickname());
+		if (!this->_channels[i].is_user_in_channel(this->_users[user_index].get_nickname())) continue;
+		this->print_msg_to_channel(":" + this->_users[user_index].get_nickname() + "!~" + this->_users[user_index].get_username() + " QUIT " + this->_channels[i].get_name() + " :Client closed the connection\n", this->_channels[i].get_name(), this->_users[user_index].get_nickname());
 		this->_channels[i].remove_user(this->_users[user_index].get_nickname());
-		// TODO(KL) should I print a message to the channel that the user left?
 		if (this->_channels[i].get_users().empty()){
 			this->_channels.erase(_channels.begin() + i--);
 		}
 	}
+	close (this->_connection_fds[user_index].fd);
+	this->_connection_fds.erase(_connection_fds.begin() + user_index);
+	this->_users.erase(_users.begin() + user_index);
 	this->_amnt_connections--;
 }
 /**
