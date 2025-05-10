@@ -19,6 +19,7 @@ class Channel{
 	private:
 		std::string				_name;
 		std::string				_key;
+		std::string				_founder;
 		std::vector<std::string>	_users;
 		std::vector<std::string>	_operators;
 		std::vector<std::string>	_invited_users;
@@ -59,6 +60,7 @@ class Channel{
 	std::string	get_topic_info() const;
 	std::string	get_name() const;
 	std::string get_creation_timestamp() const;
+	std::string get_names() const;
 };
 
 #endif

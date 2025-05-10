@@ -89,8 +89,10 @@ void Server::nick(Request request, int user_id) {
         this->_users[user_id].set_nickname(nickname);
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             this->_channels[i].rename_user(old_nickname, nickname);
+            if (this->_channels[i].is_user_in_channel(nickname)) {
+                this->print_msg_to_channel(":" + old_nickname + "!~" + this->_users[user_id].get_username() + " " + this->_channels[i].get_name() + " NICK :" + nickname + "\n", this->_channels[i].get_name(), nickname);
+            }
         }
-        // TODO(KL): print a message to all users in the channel to inform them about the nickname change
         this->print_msg_to_user(":" + old_nickname + "!~" + this->_users[user_id].get_username() + " NICK :" + nickname + "\n", user_id);
     } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
         this->_users[user_id].set_nickname(nickname);
@@ -272,9 +274,11 @@ void Server::join(Request request, int user_id) {
             if (keys.size() >= i + 1) {
                 key = keys[i];
             }
-            this->_channels.push_back(Channel(channels[i], key, this->_users[user_id].get_nickname()));
+            const Channel new_channel(channels[i], key, this->_users[user_id].get_nickname());
+            this->_channels.push_back(new_channel);
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + new_channel.get_names() + "\n", user_id);
             continue;
         }  
 
@@ -295,6 +299,11 @@ void Server::join(Request request, int user_id) {
             this->_channels[channel_index].remove_invited_user(this->_users[user_id].get_nickname());
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
             this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", channels[i], this->_users[user_id].get_nickname());
+            if (this->_channels[channel_index].get_topic() != ""){
+                this->print_reply_to_user(RPL::RPL_TOPIC, channels[i] + " :" + this->_channels[channel_index].get_topic() + "\n", user_id);
+                this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, channels[i] + " " + this->_channels[channel_index].get_topic_info() + "\n", user_id);            
+            }
+            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + this->_channels[channel_index].get_names() + "\n", user_id);
         } catch (const MaxNumberOfUsersInChannel &e) {
             this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
@@ -533,6 +542,7 @@ void Server::mode(Request request, int user_id){
     if (is_add_mode && executed_modes.size() > 0) executed_modes = " +" + executed_modes;
     else if (executed_modes.size() > 0) executed_modes = " -" + executed_modes;
     std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " MODE " + target_channel + executed_modes + executed_args + "\n";
+    this->print_msg_to_user(msg, user_id);
     this->print_msg_to_channel(msg, target_channel, this->_users[user_id].get_nickname());
 }
 

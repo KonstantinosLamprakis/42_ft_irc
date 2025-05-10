@@ -4,6 +4,7 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 {
 	this->_name = name;
 	this->_key = key;
+	this->_founder = creator;
 	this->_users.push_back(creator);
 	this->_operators.push_back(creator);
 	this->_topic = "";
@@ -239,4 +240,19 @@ void Channel::rename_user(std::string current_nickname, std::string new_nickname
 			break;
 		}
 	}
+}
+
+std::string Channel::get_names() const{
+	std::string names = "";
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (this->_founder == this->_users[i])
+			names += "~";
+		else if (this->is_user_operator(this->_users[i]))
+			names += "@";
+		names += this->_users[i];
+		if (i != this->_users.size() - 1)
+			names += ", ";
+	}
+	return (names);
 }
