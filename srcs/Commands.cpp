@@ -97,9 +97,9 @@ void Server::nick(Request request, int user_id) {
     } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
         this->_users[user_id].set_nickname(nickname);
         if (this->_users[user_id].is_registered()) {
-            //TODO(KL) print RPL from 1 to 5
-            std::string welcome_msg = ":" + SERVER_NAME + " 001 " + nickname + " :Welcome to " + SERVER_NAME +" Internet Relay Chat Network " + nickname + "\n";
-            this->print_msg_to_user(welcome_msg, user_id);
+            this->print_reply_to_user(RPL::RPL_WELCOME, " :Welcome to " + SERVER_NAME +" Internet Relay Chat Network " + nickname, user_id);
+            this->print_reply_to_user(RPL::RPL_YOURHOST, " :Your host is " + SERVER_NAME + ", running version 1.0", user_id);
+            this->print_reply_to_user(RPL::RPL_CREATED, " :This server was created " + this->_started_time, user_id);
         }
     }
 }
@@ -278,7 +278,7 @@ void Server::join(Request request, int user_id) {
             this->_channels.push_back(new_channel);
             this->_users[user_id].add_channel(channels[i]);
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
-            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + new_channel.get_names() + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + new_channel.get_names(), user_id);
             continue;
         }  
 
@@ -300,10 +300,10 @@ void Server::join(Request request, int user_id) {
             this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", user_id);
             this->print_msg_to_channel(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " JOIN :" + channels[i] + "\n", channels[i], this->_users[user_id].get_nickname());
             if (this->_channels[channel_index].get_topic() != ""){
-                this->print_reply_to_user(RPL::RPL_TOPIC, channels[i] + " :" + this->_channels[channel_index].get_topic() + "\n", user_id);
-                this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, channels[i] + " " + this->_channels[channel_index].get_topic_info() + "\n", user_id);            
+                this->print_reply_to_user(RPL::RPL_TOPIC, channels[i] + " :" + this->_channels[channel_index].get_topic(), user_id);
+                this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, channels[i] + " " + this->_channels[channel_index].get_topic_info(), user_id);            
             }
-            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + this->_channels[channel_index].get_names() + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_NAMREPLY, channels[i] + " :" + this->_channels[channel_index].get_names(), user_id);
         } catch (const MaxNumberOfUsersInChannel &e) {
             this->print_error_to_user(Error::ERR_CHANNELISFULL, channels[i] + " :Cannot join channel (+l). Channel is full.\n", user_id);
         } catch (const IncorrectKeyForChannel &e) {
@@ -397,7 +397,8 @@ void Server::privmsg(Request request, int user_id, bool is_notice){
  *  Edge cases:
  * 
  * - sending a mode with +, - and with none of them
- * - sending multiple modes like +kli TODO(KL)
+ * - sending multiple modes like +kli
+ * 
  * - -o: remove a user not in channel -> nothing
  * - -o: remove a user who doesn't exists -> nothing
  * - -o: remove a user who is on channgel but not operator -> normal execution
@@ -447,8 +448,8 @@ void Server::mode(Request request, int user_id){
         return;
     }
     if (request.get_args().size() <= 1 || request.get_args()[1] == ""){
-        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes_with_values() + "\n", user_id);
-        this->print_reply_to_user(RPL::RPL_CREATIONTIME, target_channel + " " + this->_channels[channel_index].get_creation_timestamp() + "\n", user_id);
+        this->print_reply_to_user(RPL::RPL_CHANNELMODEIS, target_channel + " " + this->_channels[channel_index].get_modes_with_values(), user_id);
+        this->print_reply_to_user(RPL::RPL_CREATIONTIME, target_channel + " " + this->_channels[channel_index].get_creation_timestamp(), user_id);
         return;
     }
     std::string modestring = request.get_args()[1];
@@ -578,10 +579,10 @@ void Server::topic(Request request, int user_id){
     if (request.get_args().size() == 1){
         const std::string topic = this->_channels[channel_index].get_topic();
         if (topic == ""){ // just return topic
-            this->print_reply_to_user(RPL::RPL_NOTOPIC, target_channel + " :No topic is set\n", user_id);
+            this->print_reply_to_user(RPL::RPL_NOTOPIC, target_channel + " :No topic is set", user_id);
         }else {
-            this->print_reply_to_user(RPL::RPL_TOPIC, target_channel + " :" + this->_channels[channel_index].get_topic() + "\n", user_id);
-            this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, target_channel + " " + this->_channels[channel_index].get_topic_info() + "\n", user_id);
+            this->print_reply_to_user(RPL::RPL_TOPIC, target_channel + " :" + this->_channels[channel_index].get_topic(), user_id);
+            this->print_reply_to_user(RPL::RPL_TOPICWHOTIME, target_channel + " " + this->_channels[channel_index].get_topic_info(), user_id);
         }
         return;
     }
@@ -695,6 +696,6 @@ void Server::invite(Request request, int user_id){
         return;
     }
     this->_channels[channel_index].add_invited_user(invited_user);
-    this->print_reply_to_user(RPL::RPL_INVITING, invited_user + " " + invited_channel + "\n", user_id);
+    this->print_reply_to_user(RPL::RPL_INVITING, invited_user + " " + invited_channel, user_id);
     this->print_msg_to_user_with_nickname(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " INVITE " + invited_user + " :" + invited_channel + "\n", invited_user);
 }
