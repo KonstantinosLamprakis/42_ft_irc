@@ -24,8 +24,13 @@ void validateInput(int ac, char **argv){
 	}
 }
 
+void run_leaks_check(void) {
+    system("leaks ircserv");
+}
+
 int main (int ac, char **argv)
 {
+	atexit(run_leaks_check); // TODO(KL): remove this line before submiting the project
 	struct sigaction	s;
 
 	memset (&s.sa_mask, 0, sizeof (s.sa_mask));
@@ -42,7 +47,7 @@ int main (int ac, char **argv)
 		irc_server.close_and_free_socket(std::string());
 	}
 	catch(const std::exception& e){
-		std::cout << e.what() << std::endl;
+		throw e; // todo(KL): remove this before submiting the project
 		return (1);
 	}
 	return (0);

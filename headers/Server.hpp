@@ -15,6 +15,7 @@
 # include <sstream>
 # include <algorithm>
 # include <cctype>
+#include <ctime>
 
 # include "Exceptions.hpp"
 # include "Utils.hpp"
@@ -48,6 +49,11 @@ namespace Command {
 
 // noumeric replies to users
 namespace RPL {
+	const std::string RPL_WELCOME = "001";
+	const std::string RPL_YOURHOST = "002";
+	const std::string RPL_CREATED = "003";
+	const std::string RPL_MYINFO = "004";
+	const std::string RPL_ISUPPORT = "005";
 	const std::string RPL_CHANNELMODEIS = "324";
 	const std::string RPL_CREATIONTIME = "329";
 	const std::string RPL_NOTOPIC = "331";
@@ -95,6 +101,7 @@ class Server
 	private:
 		int							_port;
 		std::string 				_password;
+		std::string 				_started_time;
 		int							_sockfd;
 		struct	addrinfo*			_server_info;
 		std::vector<struct pollfd>	_connection_fds;
@@ -126,6 +133,7 @@ class Server
 		void 		print_reply_to_channel(std::string numeric, std::string msg, std::string channel);
 		bool 		does_user_exist(std::string nickname);
 		int 		get_channel_index(std::string channel_name);
+		int 		get_user_index(std::string nickname);
 
 		// commands
 		void		pass(Request request, int user_index);

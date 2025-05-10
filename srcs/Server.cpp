@@ -21,6 +21,12 @@ Server::Server(){
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+
+	std::time_t now = std::time(NULL);
+    std::tm* local_time = std::localtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", local_time);
+	this->_started_time = std::string(buffer);
 }
 
 Server::Server(int port, std::string password)
@@ -32,6 +38,12 @@ Server::Server(int port, std::string password)
 	this->_sockfd = -1;
 	this->_server_info = NULL;
 	this->_amnt_connections = 0;
+
+	std::time_t now = std::time(NULL);
+    std::tm* local_time = std::localtime(&now);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", local_time);
+	this->_started_time = std::string(buffer);
 }
 
 /**
@@ -421,3 +433,16 @@ int Server::get_channel_index(std::string channel_name){
 	}
 	return (-1);
 }
+
+
+int Server::get_user_index(std::string nickname){
+	std::string uppercase_nickname = to_uppercase(nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (to_uppercase(this->_users[i].get_nickname()) == uppercase_nickname){
+			return (i);
+		}
+	}
+	return (-1);
+}
+

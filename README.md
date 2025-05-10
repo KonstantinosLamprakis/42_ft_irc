@@ -72,5 +72,6 @@
 - USER
 - JOIN
 - PRIVMSG
+- NOTICE
 - PASS
 - QUIT
