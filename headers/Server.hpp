@@ -16,6 +16,7 @@
 # include <algorithm>
 # include <cctype>
 #include <ctime>
+# include <map>
 
 # include "Exceptions.hpp"
 # include "Utils.hpp"
