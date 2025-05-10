@@ -387,7 +387,7 @@ void Server::execute(Request request, int user_index){
 	else if (uppercase_command == Command::MODE)
 		this->mode(request, user_index);
 	else
-		this->print_error_to_user(Error::ERR_UNKNOWNCOMMAND, request.getCommand() + " :Unknown command.\n", user_index);
+		this->print_error_to_user(Error::ERR_UNKNOWNCOMMAND, request.getCommand() + " :Unknown command.", user_index);
 }
 
 void	Server::signal_handler(int signal)
