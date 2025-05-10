@@ -150,8 +150,8 @@ void Server::print_reply_to_channel(std::string numeric, std::string msg, std::s
 }
 
 void Server::close_connection(int user_index){
-	// TODO(KL) discard all possible invitations for this user
 	for (unsigned long i = 0; i < this->_channels.size(); i++){
+		this->_channels[i].remove_invited_user(this->_users[user_index].get_nickname());
 		if (!this->_channels[i].is_user_in_channel(this->_users[user_index].get_nickname())) continue;
 		this->print_msg_to_channel(":" + this->_users[user_index].get_nickname() + "!~" + this->_users[user_index].get_username() + " QUIT " + this->_channels[i].get_name() + " :Client closed the connection\n", this->_channels[i].get_name(), this->_users[user_index].get_nickname());
 		this->_channels[i].remove_user(this->_users[user_index].get_nickname());

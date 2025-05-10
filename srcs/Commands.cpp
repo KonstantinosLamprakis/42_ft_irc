@@ -62,7 +62,6 @@ void Server::nick(Request request, int user_id) {
         return;
     }
 
-    // TODO(KL): when change nickname, this should be chaned also everywhere else. Should I also print message to channels?
     std::string nickname = request.get_args()[0];
     std::string uppercase_nickname = to_uppercase(nickname);
     for (int i = 1; i < this->_amnt_connections; i++) {
@@ -88,6 +87,10 @@ void Server::nick(Request request, int user_id) {
     if (this->_users[user_id].is_registered()) { // if user is already registered, we update his nickname and print a message
         const std::string old_nickname = this->_users[user_id].get_nickname();
         this->_users[user_id].set_nickname(nickname);
+        for (unsigned long i = 0; i < this->_channels.size(); i++) {
+            this->_channels[i].rename_user(old_nickname, nickname);
+        }
+        // TODO(KL): print a message to all users in the channel to inform them about the nickname change
         this->print_msg_to_user(":" + old_nickname + "!~" + this->_users[user_id].get_username() + " NICK :" + nickname + "\n", user_id);
     } else { // if user is not still registered, we just update his nickname and then check again if now he is registered
         this->_users[user_id].set_nickname(nickname);

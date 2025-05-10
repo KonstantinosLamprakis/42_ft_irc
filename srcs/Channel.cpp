@@ -60,10 +60,11 @@ void Channel::add_user(std::string user, std::string key){
  * @return true if user was removed, false if user was not found
  */
 bool Channel::remove_user(std::string user){
+	std::string user_uppercase = to_uppercase(user);
 	bool is_user_found = false;
 	for (unsigned long i = 0; i < this->_users.size(); i++)
 	{
-		if (this->_users[i] == user){
+		if (to_uppercase(this->_users[i]) == user_uppercase){
 			this->_users.erase(this->_users.begin() + i--);
 			is_user_found = true;
 			break;
@@ -71,7 +72,7 @@ bool Channel::remove_user(std::string user){
 	}
 	for (unsigned long i = 0; i < this->_operators.size(); i++)
 	{
-		if (this->_operators[i] == user){
+		if (to_uppercase(this->_operators[i]) == user_uppercase){
 			this->_operators.erase(this->_operators.begin() + i--);
 			break;
 		}
@@ -213,4 +214,29 @@ bool Channel::is_user_invited(std::string user){
 
 void Channel::set_key(std::string key){
 	this->_key = key;
+}
+
+void Channel::rename_user(std::string current_nickname, std::string new_nickname){
+	std::string user_uppercase = to_uppercase(current_nickname);
+	for (unsigned long i = 0; i < this->_users.size(); i++)
+	{
+		if (to_uppercase(this->_users[i]) == user_uppercase){
+			this->_users[i]	= new_nickname;
+			break;
+		}
+	}
+	for (unsigned long i = 0; i < this->_operators.size(); i++)
+	{
+		if (to_uppercase(this->_operators[i]) == user_uppercase){
+			this->_operators[i] = new_nickname;
+			break;
+		}
+	}
+	for (unsigned long i = 0; i < this->_invited_users.size(); i++)
+	{
+		if (to_uppercase(this->_invited_users[i]) == user_uppercase){
+			this->_invited_users[i] = new_nickname;
+			break;
+		}
+	}
 }

@@ -47,6 +47,7 @@ class Channel{
 	void 		add_invited_user(std::string user);
 	void	 	remove_invited_user(std::string user);
 	bool	 	is_user_invited(std::string user);
+	void 		rename_user(std::string old_nickname, std::string new_nickname);
 
 	// getters
 	std::string	get_modes();
