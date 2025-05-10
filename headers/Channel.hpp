@@ -34,8 +34,8 @@ class Channel{
 
 	
 	// setters
-	void		add_channel_mode(char c);
-	void		remove_channel_mode(char c);	
+	bool		add_channel_mode(char c);
+	bool		remove_channel_mode(char c);	
 	void 		add_user(std::string user, std::string key);
 	void 		add_operator(std::string user);
 	bool 		remove_operator(std::string user);

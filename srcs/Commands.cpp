@@ -198,13 +198,15 @@ void Server::join(Request request, int user_id) {
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
-    // TODO(KL) delete a channel as soon as it is empty
     if (request.get_args()[0] == "0") { // if user wants to leave all the channels
         for (unsigned long i = 0; i < this->_channels.size(); i++) {
             if (this->_channels[i].remove_user(this->_users[user_id].get_nickname())){
                 this->print_msg_to_user(":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " PART " + this->_channels[i].get_name() + "\n", user_id);
             }
             this->_users[user_id].remove_channel(this->_channels[i].get_name());
+            if (this->_channels[i].get_users().empty()){
+                this->_channels.erase(_channels.begin() + i);
+            }
         }
         return;
     }
@@ -284,8 +286,8 @@ void Server::join(Request request, int user_id) {
             }
             if (this->_channels[channel_index].get_modes().find_first_of('i') != std::string::npos){
                 bool is_user_invited = this->_channels[channel_index].is_user_invited(this->_users[user_id].get_nickname());
-                if (!is_user_invited){ // TODO(KL) adjust the error message
-                    this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, channels[i] + " :You are not invited to this channel.\n", user_id);
+                if (!is_user_invited){
+                    this->print_error_to_user(Error::ERR_INVITEONLYCHAN, channels[i] + " :Cannot join channel (+i)- you must be invited.\n", user_id);
                     continue;
                 }
             }
@@ -300,7 +302,6 @@ void Server::join(Request request, int user_id) {
         /* TODO(KL)
             - what if a user tries to join a channel which already is a member?
             - make it work with multiple channels per user
-            - handle the case of invite only channels
             - print message when new user joins the channel(and also when he leaves, mode changes etc.)
         */
     }
@@ -446,16 +447,18 @@ void Server::mode(Request request, int user_id){
         return;
     }
     std::string modestring = request.get_args()[1];
+    std::string executed_modes = "";
+    std::string executed_args = "";
     unsigned long next_arg = 2;
     unsigned long i = 0;
     bool is_add_mode = modestring[i] != '-';
     if (modestring[i] == '-' || modestring[i] == '+') i++;
-    while(i < modestring.size()){ // TODO(KL) impelemnt i and t
+    while(i < modestring.size()){
         if (modestring[i] == 'i' || modestring[i] == 't'){ 
             if (is_add_mode){
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].add_channel_mode(modestring[i])) executed_modes += modestring[i];
             } else {
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'l'){
             if (is_add_mode){
@@ -474,10 +477,13 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_max_users(max_users);
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].add_channel_mode(modestring[i])) {
+                    executed_modes += modestring[i];
+                    executed_args += " " + max_users_for_channel_str;
+                }
             } else {
                 this->_channels[channel_index].set_max_users(DEFAULT_MAX_USERS_PER_CHANNEL);
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'k'){
             if (is_add_mode){
@@ -491,10 +497,13 @@ void Server::mode(Request request, int user_id){
                     return;
                 }
                 this->_channels[channel_index].set_key(new_key);
-                this->_channels[channel_index].add_channel_mode(modestring[i]);
+                if(this->_channels[channel_index].add_channel_mode(modestring[i])) {
+                    executed_args += " " + new_key;
+                    executed_modes += modestring[i];
+                }
             }else {
                 this->_channels[channel_index].set_key("");
-                this->_channels[channel_index].remove_channel_mode(modestring[i]);
+                if (this->_channels[channel_index].remove_channel_mode(modestring[i])) executed_modes += modestring[i];
             }
         } else if (modestring[i] == 'o'){
             if (request.get_args().size() < next_arg + 1 || request.get_args()[next_arg] == ""){
@@ -525,7 +534,10 @@ void Server::mode(Request request, int user_id){
         }
         i++;
     }
-    // TODO(KL) if not error print all new modes to all users and modify the get mode to get args as well
+    if (is_add_mode && executed_modes.size() > 0) executed_modes = " +" + executed_modes;
+    else if (executed_modes.size() > 0) executed_modes = " -" + executed_modes;
+    std::string msg = ":" + this->_users[user_id].get_nickname() + "!~" + this->_users[user_id].get_username() + " MODE " + target_channel + executed_modes + executed_args + "\n";
+    this->print_msg_to_channel(msg, target_channel, this->_users[user_id].get_nickname());
 }
 
 /**
@@ -655,8 +667,8 @@ void Server::invite(Request request, int user_id){
         this->print_error_to_user(Error::ERR_NEEDMOREPARAMS, " :Not enough parameters.\n", user_id);
         return;
     }
-    const std::string invited_channel = request.get_args()[0];
-    const std::string invited_user = request.get_args()[1];
+    const std::string invited_user = request.get_args()[0];
+    const std::string invited_channel = request.get_args()[1];
     int channel_index = this->get_channel_index(invited_channel);
     if (channel_index == -1){
         this->print_error_to_user(Error::ERR_NOSUCHCHANNEL, invited_channel + " :No such channel.\n", user_id);

@@ -86,6 +86,7 @@ namespace Error {
 	const std::string ERR_INVALIDKEY = "525";
 	const std::string ERR_NOTONCHANNEL = "442";
 	const std::string ERR_USERONCHANNEL = "443";
+	const std::string ERR_INVITEONLYCHAN = "473";
 }
 
 class Server

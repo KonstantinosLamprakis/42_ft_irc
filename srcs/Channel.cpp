@@ -13,26 +13,28 @@ Channel::Channel(std::string name, std::string key, std::string creator)
 	this->_max_users = DEFAULT_MAX_USERS_PER_CHANNEL;
 }
 
-void Channel::add_channel_mode(char c)
+bool Channel::add_channel_mode(char c)
 {
 	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
 		if (this->_channel_modes[i] == c)
-			return ;
+			return (false);
 	}
 	this->_channel_modes.push_back(c);
+	return (true);
 }
 
-void Channel::remove_channel_mode(char c)
+bool Channel::remove_channel_mode(char c)
 {
 	for (unsigned long i = 0; i < this->_channel_modes.size(); i++)
 	{
 		if (this->_channel_modes[i] == c)
 		{
 			this->_channel_modes.erase(this->_channel_modes.begin() + i);
-			return ;
+			return (true);
 		}
 	}
+	return (false);
 }
 
 void Channel::add_user(std::string user, std::string key){
