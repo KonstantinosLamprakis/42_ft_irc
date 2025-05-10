@@ -107,7 +107,6 @@ void Server::print_msg_to_channel(std::string msg, std::string channel, std::str
 		if (to_uppercase(channel_users[j]) == uppercase_sender_nick) continue; // skip the user who sent the message
 		print_msg_to_user_with_nickname(msg, channel_users[j]);
 	}
-	return;
 }
 
 /**
@@ -151,16 +150,18 @@ void Server::print_reply_to_channel(std::string numeric, std::string msg, std::s
 }
 
 void Server::close_connection(int user_index){
-	close (this->_connection_fds[user_index].fd);
-	this->_connection_fds.erase(_connection_fds.begin() + user_index);
-	this->_users.erase(_users.begin() + user_index);
+	// TODO(KL) discard all possible invitations for this user
 	for (unsigned long i = 0; i < this->_channels.size(); i++){
+		if (!this->_channels[i].is_user_in_channel(this->_users[user_index].get_nickname())) continue;
+		this->print_msg_to_channel(":" + this->_users[user_index].get_nickname() + "!~" + this->_users[user_index].get_username() + " QUIT " + this->_channels[i].get_name() + " :Client closed the connection\n", this->_channels[i].get_name(), this->_users[user_index].get_nickname());
 		this->_channels[i].remove_user(this->_users[user_index].get_nickname());
-		// TODO(KL) should I print a message to the channel that the user left?
 		if (this->_channels[i].get_users().empty()){
 			this->_channels.erase(_channels.begin() + i--);
 		}
 	}
+	close (this->_connection_fds[user_index].fd);
+	this->_connection_fds.erase(_connection_fds.begin() + user_index);
+	this->_users.erase(_users.begin() + user_index);
 	this->_amnt_connections--;
 }
 /**

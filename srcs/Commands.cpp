@@ -62,6 +62,7 @@ void Server::nick(Request request, int user_id) {
         return;
     }
 
+    // TODO(KL): when change nickname, this should be chaned also everywhere else. Should I also print message to channels?
     std::string nickname = request.get_args()[0];
     std::string uppercase_nickname = to_uppercase(nickname);
     for (int i = 1; i < this->_amnt_connections; i++) {
