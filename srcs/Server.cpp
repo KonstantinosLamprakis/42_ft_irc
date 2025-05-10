@@ -176,6 +176,7 @@ void Server::close_connection(int user_index){
 	this->_users.erase(_users.begin() + user_index);
 	this->_amnt_connections--;
 }
+
 /**
  * @brief read user input, call the parser and execute the command
  * 
@@ -188,31 +189,53 @@ void Server::close_connection(int user_index){
  */
 void	Server::communicate(int i)
 {
-	char		buff[BUFFER_SIZE + 1]; //buffer to receive data
-	int			bytes_recvd = BUFFER_SIZE; //to store return value of recv
-	std::string	str = "";
+	char									buff[BUFFER_SIZE + 1]; //buffer to receive data
+	int										bytes_recvd; //to store return value of recv
+	static std::map<int, std::string>		storage;
+	std::string								str = "";
+	std::map<int, std::string>::iterator	it;
+
+	it = storage.find(i);
+	const bool exists_partially_input = (it != storage.end());
+	if (exists_partially_input) str = storage[i];
 
 	memset(&buff, 0, sizeof(buff));
-	while (bytes_recvd == BUFFER_SIZE)
-	{
+
+	while (42){
 		bytes_recvd = recv(this->_connection_fds[i].fd, buff, BUFFER_SIZE, 0);
-		if (bytes_recvd < 0 || (bytes_recvd == 0 && str == ""))
-		{
-			if (bytes_recvd < 0)
-				std::cout << "recv at fd " << this->_connection_fds[i].fd << " failed" << std::endl;
-			else
-				std::cout << "client " << this->_connection_fds[i].fd << " closed the connection" << std::endl;
+
+		// This may will be helpful for the evaluator
+		// std::cout << "bytes received: " << bytes_recvd << std::endl;
+		// for (int i = 0; i < bytes_recvd; i++)
+		// 	std::cout << "input: |" << buff[i] << "|" << (int)buff[i] << "|" << std::endl;
+		
+		if (bytes_recvd <= 0){
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Connection clossed." << std::endl;
+			if (exists_partially_input) storage.erase(it);
 			close_connection(i);
+		}
+
+		if (buff[bytes_recvd - 1] == '\n'){  
+			buff[bytes_recvd - 1] = '\0';
+			str += buff;
+			if (exists_partially_input) storage.erase(it);
+			break ;
+		}
+		else {
+			buff[bytes_recvd] = '\0';
+			str += buff;
+			if (exists_partially_input)
+				storage[i] = str;
+			else
+				storage.insert(std::pair<int, std::string>(i, str));
 			return ;
 		}
-		buff[bytes_recvd + 1] = '\0';
-		str = str + buff;
+		memset(&buff, 0, sizeof(buff));
 	}
 	if (str.empty() || str == "\n") return ; // IRC Server must ignore empty lines
 	if (str.length() > 512) this->print_msg_to_user("Error: Input too long.\n", i); // max input length is 512 for IRC
-	str.pop_back(); //remove \n at the end
 	Request in = parse(str);
-	execute(in, i); // probably in next poll - seems like we need to execute in the next while loop (eval sheet)
+	execute(in, i);
 }
 
 void	Server::accept_connection()
