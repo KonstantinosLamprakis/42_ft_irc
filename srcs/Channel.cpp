@@ -22,6 +22,8 @@ bool Channel::add_channel_mode(char c)
 			return (false);
 	}
 	this->_channel_modes.push_back(c);
+	if (c == 'i')
+		this->_invited_users.clear();
 	return (true);
 }
 
