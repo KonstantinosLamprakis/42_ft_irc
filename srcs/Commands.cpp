@@ -628,7 +628,7 @@ void Server::kick(Request request, int user_id){
         this->print_error_to_user(Error::ERR_NOTONCHANNEL, target_channel + " :You are not on that channel.", user_id);
         return;
     }
-    if (this->_channels[channel_index].get_modes().find_first_of('t') != std::string::npos && !this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
+    if (!this->_channels[channel_index].is_user_operator(this->_users[user_id].get_nickname())){
         this->print_error_to_user(Error::ERR_CHANOPRIVSNEEDED, target_channel + " :You are not channel operator.", user_id);
         return;
     }
