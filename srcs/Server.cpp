@@ -210,7 +210,7 @@ void	Server::communicate(int i)
 		// 	std::cout << "input: |" << buff[i] << "|" << (int)buff[i] << "|" << std::endl;
 		
 		if (bytes_recvd <= 0){
-			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Connection clossed." << std::endl;
+			std::cout << "recv at fd " << this->_connection_fds[i].fd << " no data. Connection closed." << std::endl;
 			if (exists_partially_input) storage.erase(it);
 			close_connection(i);
 		}

@@ -45,7 +45,6 @@ void Server::pass(Request request, int user_id) {
  * - run NICK before authothentication(PASS) -> error
  * - run NICK before registration(PASS + NICK + USER) -> prints nothing, updates nickname
  * - run NICK after registration -> prints and updates nickname
- * - run NICK with extremely large nickname -> TODO(KL)
  * - run NICK with same nickname -> does nothing
  * - run NICK with same nickname but different capitalization -> updates nickname
  * 
@@ -551,7 +550,10 @@ void Server::mode(Request request, int user_id){
  * @brief 
  * 
  * Edge cases:
- * - huge topic (TODO(KL)) + needs more testing
+ * - topic #channel -> returns the topic of channel if exists, otherwise say its empty
+ * - topic #channel topic -> set the topic of channel to topic
+ * - if t mode is enabled on channel, only channel operator can set the topic
+ * - topic : -> unset an existed topic
  * 
  * @param request 
  * @param user_id 
@@ -600,7 +602,9 @@ void Server::topic(Request request, int user_id){
 }
 
 /**
- * @brief TODO(KL) add edge cases e.g. extremely big comment etc.
+ * @brief 
+ * 
+ * Only operator can kick a user from channel. Can also kick himself.
  * 
  * @param request 
  * @param user_id 
@@ -665,7 +669,8 @@ void Server::kick(Request request, int user_id){
 }
 
 /**
- * @brief TODO(KL)
+ * @brief A user can be invited to any channel, but its more useful for channels with flag i which means you can only enter
+ * if you are invited
  * 
  * @param request 
  * @param user_id 
